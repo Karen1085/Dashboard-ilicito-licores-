@@ -45,7 +45,6 @@ def load_and_fix_geojson():
 colombia_geojson = load_and_fix_geojson()
 
 # 3. Diccionario de coordenadas para poner los NÚMEROS sobre el mapa
-# Hemos movido San Andrés hacia el agua (noroeste de la isla reubicada) para que no tape nada.
 coords_dptos = {
     "Amazonas": {"lat": -1.0, "lon": -71.5}, "Antioquia": {"lat": 6.5, "lon": -75.3},
     "Arauca": {"lat": 6.5, "lon": -71.0}, "Atlántico": {"lat": 10.6, "lon": -75.0},
@@ -60,7 +59,7 @@ coords_dptos = {
     "Meta": {"lat": 3.5, "lon": -73.0}, "Nariño": {"lat": 1.5, "lon": -77.5},
     "Nte. Santander": {"lat": 8.0, "lon": -73.0}, "Putumayo": {"lat": 0.5, "lon": -76.0},
     "Quindío": {"lat": 4.5, "lon": -75.6}, "Risaralda": {"lat": 5.0, "lon": -76.0},
-    "San Andrés": {"lat": 12.2, "lon": -76.8}, # Pin movido fuera del mapa (en el mar)
+    "San Andrés": {"lat": 12.2, "lon": -76.8}, 
     "Santander": {"lat": 6.5, "lon": -73.0},
     "Sucre": {"lat": 9.0, "lon": -75.0}, "Tolima": {"lat": 4.0, "lon": -75.0},
     "Valle del Cauca": {"lat": 3.5, "lon": -76.5}, "Vaupés": {"lat": 0.5, "lon": -70.5},
@@ -107,6 +106,9 @@ zona_seleccionada = st.sidebar.selectbox(
 )
 
 # 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
+# Calcular el promedio por ZONA general para usarlo en la tabla resumen
+df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)"]].mean().reset_index()
+
 if zona_seleccionada != "Todas las Zonas":
     df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
     df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
@@ -129,15 +131,15 @@ fig = px.choropleth(
     hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f'}
 )
 
-# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA (Tamaño reducido para elegancia)
+# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA
 if not df_zona.empty:
     fig.add_trace(go.Scattergeo(
         lon=df_zona["lon"],
         lat=df_zona["lat"],
         text=df_zona["Numero"].astype(str),
         mode="markers+text",
-        textfont=dict(color="white", size=11, family="sans-serif", weight="bold"), # Texto más pequeño
-        marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1.5, color="white")), # Pin más pequeño
+        textfont=dict(color="white", size=11, family="sans-serif", weight="bold"),
+        marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1.5, color="white")),
         textposition="middle center",
         hoverinfo="skip",
         showlegend=False
@@ -146,7 +148,7 @@ if not df_zona.empty:
 fig.update_geos(visible=False, fitbounds="locations")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
 
-# 10. DISPOSICIÓN VISUAL (Columnas: Izquierda Mapa, Derecha Cajitas)
+# 10. DISPOSICIÓN VISUAL (Columnas: Izquierda Mapa, Derecha Cajitas/Tabla)
 col1, col2 = st.columns([1.8, 1.2])
 
 with col1:
@@ -190,7 +192,19 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.info("👆 Selecciona una zona en el menú izquierdo para ver el desglose de los departamentos en este panel.")
+        # AQUÍ ESTÁ EL CAMBIO: El cuadro que aparece cuando "Todas las Zonas" está seleccionado
+        st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios de Ilicitud por Zonas</h3>", unsafe_allow_html=True)
+        st.info("💡 Selecciona una zona específica en el menú izquierdo para ver el detalle interactivo por departamento.")
+        
+        # Mostramos la tabla resumen estilizada
+        st.dataframe(
+            df_promedios.style.format({
+                "Adulteración (%)": "{:.2f}%",
+                "Contrabando (%)": "{:.2f}%"
+            }),
+            hide_index=True, 
+            use_container_width=True
+        )
 
 st.markdown("---")
 st.markdown("### Base de Datos General")
