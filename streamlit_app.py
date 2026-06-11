@@ -7,33 +7,45 @@ import requests
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
-st.markdown("Análisis geoespacial interactivo. *Nota: San Andrés ha sido reubicado y ampliado (escala 5x) visualmente para facilitar su lectura.*")
+st.markdown("Análisis geoespacial interactivo. *Nota: El Archipiélago de San Andrés y Providencia ha sido agrupado, escalado (5x) y reubicado visualmente.*")
 
-# 2. Cargar el mapa GeoJSON de Colombia, ACERCAR y AGRANDAR SAN ANDRÉS
+# 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
 @st.cache_data
 def load_and_fix_geojson():
     url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json"
     geojson = requests.get(url).json()
     
-    # Parámetros matemáticos para la "Lupa" de San Andrés
-    lon_c, lat_c = -81.5, 12.5 # Centroide aproximado del archipiélago
-    scale_factor = 5.0         # Qué tan grande queremos hacer las islas (5 veces más grandes)
-    lon_shift = 5.5            # Movimiento hacia el Este (hacia el continente)
-    lat_shift = -1.0           # Movimiento hacia el Sur
-    
-    # Función recursiva para Escalar y Trasladar
+    # Función recursiva para transformar coordenadas
     def transform_coords(coords):
         if isinstance(coords[0], (int, float)):
             lon, lat = coords[0], coords[1]
-            # 1. Escalar (agrandar respecto al centroide)
-            lon_scaled = lon_c + (lon - lon_c) * scale_factor
-            lat_scaled = lat_c + (lat - lat_c) * scale_factor
-            # 2. Trasladar (mover a la costa)
-            return [lon_scaled + lon_shift, lat_scaled + lat_shift]
+            
+            # 1. Identificar si es Providencia (Norte) o San Andrés (Sur)
+            # Todo lo que esté por encima de la latitud 13.0 es Providencia/Santa Catalina
+            if lat > 13.0:
+                # Centro aproximado real de Providencia
+                lon_c, lat_c = -81.37, 13.35
+                # Nuevo centro: La acercamos artificialmente hacia el sur y al oeste (hacia San Andrés)
+                lon_c_new, lat_c_new = -81.60, 12.85 
+            else:
+                # Centro aproximado de San Andrés
+                lon_c, lat_c = -81.70, 12.55
+                lon_c_new, lat_c_new = -81.70, 12.55 # Se queda en su eje
+            
+            # 2. Escalar 5 veces el tamaño de cada isla sobre su propio eje
+            scale_factor = 5.0
+            lon_scaled = lon_c_new + (lon - lon_c) * scale_factor
+            lat_scaled = lat_c_new + (lat - lat_c) * scale_factor
+            
+            # 3. Trasladar el bloque ya compacto hacia la costa continental
+            lon_final = lon_scaled + 5.5  # Mover a la derecha (Este)
+            lat_final = lat_scaled - 1.0  # Mover abajo (Sur)
+            
+            return [lon_final, lat_final]
         else:
             return [transform_coords(c) for c in coords]
             
-    # Aplicar la transformación solo a San Andrés
+    # Aplicar la transformación SOLO al departamento del Archipiélago
     for feature in geojson['features']:
         if feature['properties']['NOMBRE_DPT'] == 'ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA':
             feature['geometry']['coordinates'] = transform_coords(feature['geometry']['coordinates'])
