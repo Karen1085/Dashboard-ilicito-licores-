@@ -156,15 +156,13 @@ with col1:
     use_container_width=True,
     config={
         'toImageButtonOptions': {
-            'format': 'png', 
+            'format': 'svg', # <-- CAMBIA 'png' POR 'svg'
             'filename': f'mapa_{zona_seleccionada}',
             'height': 800,
-            'width': 1200,
-            'scale': 4 # ¡Este es el truco! Multiplica la resolución por 4
+            'width': 1200
         }
     }
 )
-
 with col2:
     if zona_seleccionada != "Todas las Zonas":
         st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
