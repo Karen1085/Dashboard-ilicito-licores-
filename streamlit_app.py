@@ -17,16 +17,16 @@ def load_geojson():
 
 colombia_geojson = load_geojson()
 
-# 3. Cargar y procesar los datos desde tu archivo Excel
+# 3. Cargar y procesar los datos
 @st.cache_data
 def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
     
-    # Convertir las métricas a porcentaje (0 - 100)
+    # Convertir a porcentaje
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
     
-    # Homologación exacta con los nombres del GeoJSON (incluye San Andrés completo)
+    # Homologación exacta
     mapeo_nombres = {
         "Antioquia": "ANTIOQUIA", "Atlántico": "ATLANTICO", "Bogotá D.C.": "SANTAFE DE BOGOTA D.C",
         "Bolívar": "BOLIVAR", "Boyacá": "BOYACA", "Caldas": "CALDAS", "Caquetá": "CAQUETA",
@@ -45,9 +45,13 @@ def load_data():
 
 df = load_data()
 
-# 4. Calcular el promedio por ZONA
+# 4. Calcular promedios por Zona
 df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)"]].mean().reset_index()
 df_mapa = pd.merge(df[["Departamento", "DPT_GEOJSON", "Zona"]], df_promedios, on="Zona", how="left")
+
+# --- TRUCO: SEPARAR CONTINENTE Y SAN ANDRÉS ---
+df_continente = df_mapa[df_mapa["Departamento"] != "San Andrés"]
+df_san_andres = df_mapa[df_mapa["Departamento"] == "San Andrés"]
 
 # 5. Menú lateral (Sidebar)
 st.sidebar.header("Filtros del Mapa")
@@ -57,37 +61,51 @@ metrica_seleccionada = st.sidebar.radio(
 )
 
 escala_color = "YlOrRd" if metrica_seleccionada == "Adulteración (%)" else "YlGnBu"
+rango_colores = (0, df_promedios[metrica_seleccionada].max() + 2)
 
-# 6. CREACIÓN DEL MAPA ENFOCADO (Sin países vecinos ni fondo de calles)
-fig = px.choropleth(
-    df_mapa,
+# 6. CREACIÓN DEL MAPA PRINCIPAL (CONTINENTE)
+fig_main = px.choropleth(
+    df_continente,
     geojson=colombia_geojson,
     featureidkey="properties.NOMBRE_DPT",
     locations="DPT_GEOJSON",
     color=metrica_seleccionada,
     color_continuous_scale=escala_color,
-    range_color=(0, df_promedios[metrica_seleccionada].max() + 2),
+    range_color=rango_colores,
     hover_name="Zona",
-    hover_data={"DPT_GEOJSON": False, "Departamento": True, metrica_seleccionada: ':.2f'},
-    labels={metrica_seleccionada: f"{metrica_seleccionada}"}
+    hover_data={"DPT_GEOJSON": False, "Departamento": True, metrica_seleccionada: ':.2f'}
 )
+fig_main.update_geos(visible=False, fitbounds="locations")
+fig_main.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
-# EL TRUCO VISUAL: Ocultar todo lo externo y auto-ajustar a los polígonos existentes
-fig.update_geos(
-    visible=False,             # Oculta el mapa mundial base (otros países y océanos)
-    fitbounds="locations"      # Ajusta el zoom automáticamente para que encuadre perfectamente Colombia y San Andrés
+# 7. CREACIÓN DEL MAPA LUPA (SAN ANDRÉS)
+fig_sa = px.choropleth(
+    df_san_andres,
+    geojson=colombia_geojson,
+    featureidkey="properties.NOMBRE_DPT",
+    locations="DPT_GEOJSON",
+    color=metrica_seleccionada,
+    color_continuous_scale=escala_color,
+    range_color=rango_colores,
+    hover_name="Zona",
+    hover_data={"DPT_GEOJSON": False, "Departamento": True, metrica_seleccionada: ':.2f'}
 )
+fig_sa.update_geos(visible=False, fitbounds="locations")
+# Ocultamos la leyenda en la lupa para ahorrar espacio
+fig_sa.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, coloraxis_showscale=False, height=250)
 
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-
-# 7. Disposición en la pantalla
+# 8. Disposición en la pantalla
 col1, col2 = st.columns([2.5, 1])
 
 with col1:
     st.markdown(f"### Mapa por Zonas: {metrica_seleccionada}")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_main, use_container_width=True)
 
 with col2:
+    # Mostramos la lupa de San Andrés justo arriba de los datos
+    st.markdown("### 🏝️ Lupa: San Andrés")
+    st.plotly_chart(fig_sa, use_container_width=True)
+    
     st.markdown("### Promedios por Zona")
     st.dataframe(df_promedios.style.format({
         "Adulteración (%)": "{:.2f}%",
