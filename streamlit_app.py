@@ -151,7 +151,19 @@ fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600
 col1, col2 = st.columns([1.8, 1.2])
 
 with col1:
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+    fig, 
+    use_container_width=True,
+    config={
+        'toImageButtonOptions': {
+            'format': 'png', 
+            'filename': f'mapa_{zona_seleccionada}',
+            'height': 800,
+            'width': 1200,
+            'scale': 4 # ¡Este es el truco! Multiplica la resolución por 4
+        }
+    }
+)
 
 with col2:
     if zona_seleccionada != "Todas las Zonas":
