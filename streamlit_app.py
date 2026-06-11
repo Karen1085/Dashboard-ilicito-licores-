@@ -129,9 +129,15 @@ if zona_seleccionada != "Todas las Zonas":
     # Crear un grid de columnas (4 columnas por fila queda muy elegante)
     cols = st.columns(4)
     
-    # Iterar sobre los departamentos y crear una cajita HTML/CSS para cada uno
-    for index, row in enumerate(df_zona.itertuples()):
-        with cols[index % 4]: # Reparte las cajitas equitativamente en las 4 columnas
+    # Iterar sobre los departamentos usando iterrows() para evitar errores con caracteres especiales
+    for i, (index, row) in enumerate(df_zona.iterrows()):
+        
+        # Extraemos los valores llamando exactamente a la columna
+        depto_nombre = row["Departamento"]
+        adul_val = row["Adulteración (%)"]
+        contra_val = row["Contrabando (%)"]
+        
+        with cols[i % 4]: # Reparte las cajitas equitativamente en las 4 columnas
             st.markdown(f"""
             <div style="
                 border: 2px solid {color_borde}; 
@@ -141,15 +147,15 @@ if zona_seleccionada != "Todas las Zonas":
                 margin-bottom: 20px; 
                 background-color: white; 
                 box-shadow: 2px 4px 10px rgba(0,0,0,0.1);">
-                <h4 style="margin-top: 0; color: #192055; text-align: center; font-family: sans-serif;">{row.Departamento}</h4>
+                <h4 style="margin-top: 0; color: #192055; text-align: center; font-family: sans-serif;">{depto_nombre}</h4>
                 <hr style="margin: 10px 0; border: 1px solid #E5E7EB;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                     <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Adulteración:</span>
-                    <span style="color: #B91C1C; font-weight: bold; font-size: 14px;">{row._4:.2f}%</span>
+                    <span style="color: #B91C1C; font-weight: bold; font-size: 14px;">{adul_val:.2f}%</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Contrabando:</span>
-                    <span style="color: #D97706; font-weight: bold; font-size: 14px;">{row._5:.2f}%</span>
+                    <span style="color: #D97706; font-weight: bold; font-size: 14px;">{contra_val:.2f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
