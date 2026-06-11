@@ -7,7 +7,7 @@ import requests
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
-st.markdown("Análisis geoespacial interactivo basado en los promedios por zonas de la Federación Nacional de Departamentos.")
+st.markdown("Análisis geoespacial interactivo enfocado exclusivamente en el territorio colombiano.")
 
 # 2. Cargar el mapa GeoJSON de Colombia
 @st.cache_data
@@ -20,14 +20,13 @@ colombia_geojson = load_geojson()
 # 3. Cargar y procesar los datos desde tu archivo Excel
 @st.cache_data
 def load_data():
-    # Leer el Excel que está en tu repositorio GitHub
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
     
-    # Convertir las métricas a porcentaje (0 - 100) para mejor visualización
+    # Convertir las métricas a porcentaje (0 - 100)
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
     
-    # Diccionario para homologar los nombres de tu Excel con las fronteras del GeoJSON
+    # Homologación exacta con los nombres del GeoJSON (incluye San Andrés completo)
     mapeo_nombres = {
         "Antioquia": "ANTIOQUIA", "Atlántico": "ATLANTICO", "Bogotá D.C.": "SANTAFE DE BOGOTA D.C",
         "Bolívar": "BOLIVAR", "Boyacá": "BOYACA", "Caldas": "CALDAS", "Caquetá": "CAQUETA",
@@ -47,47 +46,45 @@ def load_data():
 df = load_data()
 
 # 4. Calcular el promedio por ZONA
-# Esto es vital para que todos los departamentos de una zona se pinten del mismo color
 df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)"]].mean().reset_index()
-
-# Unimos los promedios calculados con los departamentos para graficarlos
 df_mapa = pd.merge(df[["Departamento", "DPT_GEOJSON", "Zona"]], df_promedios, on="Zona", how="left")
 
-# 5. Menú lateral (Sidebar) interactivo
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Escudo_de_Colombia.svg/120px-Escudo_de_Colombia.svg.png", width=80)
-st.sidebar.header("Configuración")
+# 5. Menú lateral (Sidebar)
+st.sidebar.header("Filtros del Mapa")
 metrica_seleccionada = st.sidebar.radio(
-    "Selecciona el indicador a visualizar:",
+    "Selecciona el indicador:",
     ["Adulteración (%)", "Contrabando (%)"]
 )
 
-# Definir la escala de colores (Rojo/Amarillo para Adulteración, Azul/Amarillo para Contrabando)
 escala_color = "YlOrRd" if metrica_seleccionada == "Adulteración (%)" else "YlGnBu"
 
-# 6. Crear el mapa interactivo con Plotly
-fig = px.choropleth_mapbox(
+# 6. CREACIÓN DEL MAPA ENFOCADO (Sin países vecinos ni fondo de calles)
+fig = px.choropleth(
     df_mapa,
     geojson=colombia_geojson,
     featureidkey="properties.NOMBRE_DPT",
     locations="DPT_GEOJSON",
     color=metrica_seleccionada,
     color_continuous_scale=escala_color,
-    range_color=(0, df_promedios[metrica_seleccionada].max() + 2), # Ajuste automático del rango
-    mapbox_style="carto-positron",
-    zoom=4.5,
-    center={"lat": 4.5709, "lon": -74.2973},
-    opacity=0.85,
+    range_color=(0, df_promedios[metrica_seleccionada].max() + 2),
     hover_name="Zona",
-    hover_data={"DPT_GEOJSON": False, "Departamento": True, metrica_seleccionada: ':.2f'}
+    hover_data={"DPT_GEOJSON": False, "Departamento": True, metrica_seleccionada: ':.2f'},
+    labels={metrica_seleccionada: f"{metrica_seleccionada}"}
+)
+
+# EL TRUCO VISUAL: Ocultar todo lo externo y auto-ajustar a los polígonos existentes
+fig.update_geos(
+    visible=False,             # Oculta el mapa mundial base (otros países y océanos)
+    fitbounds="locations"      # Ajusta el zoom automáticamente para que encuadre perfectamente Colombia y San Andrés
 )
 
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
-# 7. Disposición en la pantalla (Columnas)
+# 7. Disposición en la pantalla
 col1, col2 = st.columns([2.5, 1])
 
 with col1:
-    st.markdown(f"### Mapa de Calor Promedio: {metrica_seleccionada}")
+    st.markdown(f"### Mapa por Zonas: {metrica_seleccionada}")
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
@@ -96,11 +93,9 @@ with col2:
         "Adulteración (%)": "{:.2f}%",
         "Contrabando (%)": "{:.2f}%"
     }), hide_index=True, use_container_width=True)
-    
-    st.info("💡 **Nota interactiva:** Al pasar el ratón por el mapa, verás a qué departamento y zona pertenece cada región.")
 
 st.markdown("---")
-st.markdown("### Base de Datos Detallada (Extraída del Excel)")
+st.markdown("### Base de Datos Completa")
 st.dataframe(df.drop(columns=["DPT_GEOJSON"]).style.format({
     "Adulteración": "{:.2%}",
     "Contrabando": "{:.2%}",
