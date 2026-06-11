@@ -7,7 +7,7 @@ import requests
 # 1. Configuración de la página
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
-st.title("📊 Dashboard : Mercado Ilícito de Licores 2025")
+st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
 st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
@@ -192,19 +192,78 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        # AQUÍ ESTÁ EL CAMBIO: El cuadro que aparece cuando "Todas las Zonas" está seleccionado
+        # NUEVA TABLA HTML/CSS DISEÑADA A MEDIDA
         st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios de Ilicitud por Zonas</h3>", unsafe_allow_html=True)
         st.info("💡 Selecciona una zona específica en el menú izquierdo para ver el detalle interactivo por departamento.")
         
-        # Mostramos la tabla resumen estilizada
-        st.dataframe(
-            df_promedios.style.format({
-                "Adulteración (%)": "{:.2f}%",
-                "Contrabando (%)": "{:.2f}%"
-            }),
-            hide_index=True, 
-            use_container_width=True
-        )
+        # Generar el bloque HTML de la tabla
+        html_table = """
+        <style>
+            .styled-table {
+                border-collapse: collapse;
+                margin: 15px 0;
+                font-size: 14px;
+                font-family: sans-serif;
+                width: 100%;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                border-radius: 8px 8px 0 0;
+                overflow: hidden;
+            }
+            .styled-table thead tr {
+                background-color: #192055;
+                color: #ffffff;
+                text-align: left;
+            }
+            .styled-table th, .styled-table td {
+                padding: 14px 15px;
+            }
+            .styled-table tbody tr {
+                border-bottom: 1px solid #e2e8f0;
+                background-color: #ffffff;
+            }
+            .styled-table tbody tr:nth-of-type(even) {
+                background-color: #f8fafc;
+            }
+            .styled-table tbody tr:hover {
+                background-color: #f1f5f9;
+            }
+        </style>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Zonas FND</th>
+                    <th style="text-align: right;">Adulteración</th>
+                    <th style="text-align: right;">Contrabando</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        # Iterar para llenar las filas con los colores correspondientes
+        for index, row in df_promedios.iterrows():
+            zona = row["Zona"]
+            adul = row["Adulteración (%)"]
+            contra = row["Contrabando (%)"]
+            color_zona = colores_invamer.get(zona, "#000000")
+            
+            html_table += f"""
+                <tr>
+                    <td style="font-weight: bold; color: #192055; display: flex; align-items: center;">
+                        <span style="background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;"></span>
+                        {zona}
+                    </td>
+                    <td style="text-align: right; color: #B91C1C; font-weight: bold;">{adul:.2f}%</td>
+                    <td style="text-align: right; color: #D97706; font-weight: bold;">{contra:.2f}%</td>
+                </tr>
+            """
+            
+        html_table += """
+            </tbody>
+        </table>
+        """
+        
+        # Inyectar la tabla en Streamlit
+        st.markdown(html_table, unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("### Base de Datos General")
