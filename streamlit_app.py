@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
+import requests
 
 # 1. Configuración de la página
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
