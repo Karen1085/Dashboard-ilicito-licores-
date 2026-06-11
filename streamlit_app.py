@@ -7,7 +7,7 @@ import requests
 # 1. Configuración de la página
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
-st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
+st.title("📊 Dashboard : Mercado Ilícito de Licores 2025")
 st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
