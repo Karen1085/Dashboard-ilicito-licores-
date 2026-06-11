@@ -7,7 +7,7 @@ import requests
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
-st.markdown("Análisis geoespacial interactivo. *Nota: El Archipiélago de San Andrés y Providencia ha sido agrupado, escalado (5x) y reubicado visualmente.*")
+st.markdown("Análisis geoespacial interactivo. Seleccione una Zona para ver el detalle departamental.")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
 @st.cache_data
@@ -68,19 +68,15 @@ def load_data():
 
 df = load_data()
 
-# Calcular el promedio por ZONA
-df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)"]].mean().reset_index()
-df_mapa = pd.merge(df[["Departamento", "DPT_GEOJSON", "Zona"]], df_promedios, on="Zona", how="left")
-
 # 4. PALETA DE COLORES DE INVAMER
 colores_invamer = {
     "Zona 1": "#8FBC8B", # Verde
-    "Zona 2": "#E4B56C", # Mostaza / Naranja claro
+    "Zona 2": "#E4B56C", # Mostaza
     "Zona 3": "#192055", # Azul Oscuro
     "Zona 4": "#C9D8C5", # Verde Claro
-    "Zona 5": "#528797", # Azul Petróleo / Teal
-    "Zona 6": "#CBE0EE", # Celeste / Azul Claro
-    "Otras Zonas": "#D3D3D3" # Gris (Para las zonas no seleccionadas)
+    "Zona 5": "#528797", # Azul Petróleo
+    "Zona 6": "#CBE0EE", # Celeste
+    "Otras Zonas": "#E5E7EB" # Gris claro suave
 }
 
 # 5. MENÚ LATERAL INTERACTIVO
@@ -91,21 +87,19 @@ zona_seleccionada = st.sidebar.selectbox(
 )
 
 # 6. LÓGICA DE FILTRADO (Efecto Gris)
-# Creamos una columna temporal "Visual_Zona". 
-# Si filtramos, los departamentos que no son de esa zona pasan a llamarse "Otras Zonas" (que se pinta de gris)
 if zona_seleccionada != "Todas las Zonas":
-    df_mapa["Visual_Zona"] = df_mapa["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
+    df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
 else:
-    df_mapa["Visual_Zona"] = df_mapa["Zona"]
+    df["Visual_Zona"] = df["Zona"]
 
-# 7. CREAR EL MAPA DE COLOR DISCRETO
+# 7. CREAR EL MAPA
 fig = px.choropleth(
-    df_mapa,
+    df,
     geojson=colombia_geojson,
     featureidkey="properties.NOMBRE_DPT",
     locations="DPT_GEOJSON",
-    color="Visual_Zona",                   # Colorear por la nueva columna temporal
-    color_discrete_map=colores_invamer,    # Usar el diccionario de colores fijos
+    color="Visual_Zona",
+    color_discrete_map=colores_invamer,
     hover_name="Departamento",
     hover_data={
         "DPT_GEOJSON": False, 
@@ -116,45 +110,49 @@ fig = px.choropleth(
     }
 )
 
-# Ocultar el mapa base del mundo y auto-encuadrar
 fig.update_geos(visible=False, fitbounds="locations")
-# Ajustamos márgenes y ocultamos la leyenda de colores porque es intuitiva
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False) 
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=500) 
 
-# 8. DISPOSICIÓN VISUAL
-col1, col2 = st.columns([2.5, 1])
+# 8. DISPOSICIÓN VISUAL (MAPA ARRIBA, CAJITAS ABAJO)
+st.plotly_chart(fig, use_container_width=True)
 
-with col1:
-    st.markdown(f"### Mapa: {zona_seleccionada}")
-    st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    st.markdown(f"### Datos de {zona_seleccionada}")
+# 9. GENERACIÓN DE "CAJITAS" (Tarjetas de información por departamento)
+if zona_seleccionada != "Todas las Zonas":
+    st.markdown(f"### Detalle Departamental: {zona_seleccionada}")
     
-    # Si se selecciona una sola zona, mostramos los promedios específicos de esa zona en tarjetas grandes
-    if zona_seleccionada != "Todas las Zonas":
-        datos_zona = df_promedios[df_promedios["Zona"] == zona_seleccionada].iloc[0]
-        st.metric("Adulteración Promedio", f"{datos_zona['Adulteración (%)']:.2f}%")
-        st.metric("Contrabando Promedio", f"{datos_zona['Contrabando (%)']:.2f}%")
-        
-        st.markdown(f"**Departamentos en la {zona_seleccionada}:**")
-        deptos_zona = df[df["Zona"] == zona_seleccionada]["Departamento"].tolist()
-        st.write(", ".join(deptos_zona))
-    else:
-        # Si están todas, mostramos la tabla general
-        st.dataframe(df_promedios.style.format({
-            "Adulteración (%)": "{:.2f}%",
-            "Contrabando (%)": "{:.2f}%"
-        }), hide_index=True, use_container_width=True)
+    # Filtrar solo los departamentos de la zona seleccionada
+    df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento")
     
-st.markdown("---")
-st.markdown("### Base de Datos Detallada")
-# Filtramos la tabla de abajo si hay una zona seleccionada
-df_mostrar = df if zona_seleccionada == "Todas las Zonas" else df[df["Zona"] == zona_seleccionada]
-
-st.dataframe(df_mostrar.drop(columns=["DPT_GEOJSON"]).style.format({
-    "Adulteración": "{:.2%}",
-    "Contrabando": "{:.2%}",
-    "Adulteración (%)": "{:.2f}%",
-    "Contrabando (%)": "{:.2f}%"
-}), use_container_width=True)
+    # Obtener el color de la zona para pintar el borde de las cajitas
+    color_borde = colores_invamer[zona_seleccionada]
+    
+    # Crear un grid de columnas (4 columnas por fila queda muy elegante)
+    cols = st.columns(4)
+    
+    # Iterar sobre los departamentos y crear una cajita HTML/CSS para cada uno
+    for index, row in enumerate(df_zona.itertuples()):
+        with cols[index % 4]: # Reparte las cajitas equitativamente en las 4 columnas
+            st.markdown(f"""
+            <div style="
+                border: 2px solid {color_borde}; 
+                border-top: 8px solid {color_borde};
+                border-radius: 8px; 
+                padding: 15px; 
+                margin-bottom: 20px; 
+                background-color: white; 
+                box-shadow: 2px 4px 10px rgba(0,0,0,0.1);">
+                <h4 style="margin-top: 0; color: #192055; text-align: center; font-family: sans-serif;">{row.Departamento}</h4>
+                <hr style="margin: 10px 0; border: 1px solid #E5E7EB;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Adulteración:</span>
+                    <span style="color: #B91C1C; font-weight: bold; font-size: 14px;">{row._4:.2f}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Contrabando:</span>
+                    <span style="color: #D97706; font-weight: bold; font-size: 14px;">{row._5:.2f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    # Si "Todas las Zonas" está seleccionado, mostramos una tabla resumen general
+    st.info("👆 Selecciona una zona específica en el menú izquierdo para ver las tarjetas informativas de cada departamento.")
