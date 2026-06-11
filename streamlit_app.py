@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import requests
 
 # 1. Configuración de la página
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
-st.markdown("Análisis geoespacial interactivo. Seleccione una Zona para ver el detalle departamental.")
+st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
 @st.cache_data
@@ -43,7 +44,28 @@ def load_and_fix_geojson():
 
 colombia_geojson = load_and_fix_geojson()
 
-# 3. Cargar y procesar los datos
+# 3. Diccionario de coordenadas para poner los NÚMEROS sobre el mapa
+coords_dptos = {
+    "Amazonas": {"lat": -1.0, "lon": -71.5}, "Antioquia": {"lat": 6.5, "lon": -75.3},
+    "Arauca": {"lat": 6.5, "lon": -71.0}, "Atlántico": {"lat": 10.6, "lon": -75.0},
+    "Bogotá D.C.": {"lat": 4.3, "lon": -74.1}, "Bolívar": {"lat": 9.0, "lon": -74.3},
+    "Boyacá": {"lat": 5.5, "lon": -72.5}, "Caldas": {"lat": 5.3, "lon": -75.3},
+    "Caquetá": {"lat": 1.0, "lon": -74.0}, "Casanare": {"lat": 5.5, "lon": -71.5},
+    "Cauca": {"lat": 2.5, "lon": -76.5}, "Cesar": {"lat": 9.5, "lon": -73.5},
+    "Chocó": {"lat": 5.5, "lon": -76.8}, "Córdoba": {"lat": 8.0, "lon": -75.8},
+    "Cundinamarca": {"lat": 5.0, "lon": -74.0}, "Guainía": {"lat": 2.5, "lon": -69.0},
+    "Guaviare": {"lat": 2.0, "lon": -71.5}, "Huila": {"lat": 2.5, "lon": -75.5},
+    "La Guajira": {"lat": 11.5, "lon": -72.5}, "Magdalena": {"lat": 10.0, "lon": -74.0},
+    "Meta": {"lat": 3.5, "lon": -73.0}, "Nariño": {"lat": 1.5, "lon": -77.5},
+    "Nte. Santander": {"lat": 8.0, "lon": -73.0}, "Putumayo": {"lat": 0.5, "lon": -76.0},
+    "Quindío": {"lat": 4.5, "lon": -75.6}, "Risaralda": {"lat": 5.0, "lon": -76.0},
+    "San Andrés": {"lat": 11.55, "lon": -76.2}, "Santander": {"lat": 6.5, "lon": -73.0},
+    "Sucre": {"lat": 9.0, "lon": -75.0}, "Tolima": {"lat": 4.0, "lon": -75.0},
+    "Valle del Cauca": {"lat": 3.5, "lon": -76.5}, "Vaupés": {"lat": 0.5, "lon": -70.5},
+    "Vichada": {"lat": 4.5, "lon": -69.5}
+}
+
+# 4. Cargar y procesar los datos
 @st.cache_data
 def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
@@ -68,31 +90,33 @@ def load_data():
 
 df = load_data()
 
-# 4. PALETA DE COLORES DE INVAMER
+# 5. PALETA DE COLORES DE INVAMER
 colores_invamer = {
-    "Zona 1": "#8FBC8B", # Verde
-    "Zona 2": "#E4B56C", # Mostaza
-    "Zona 3": "#192055", # Azul Oscuro
-    "Zona 4": "#C9D8C5", # Verde Claro
-    "Zona 5": "#528797", # Azul Petróleo
-    "Zona 6": "#CBE0EE", # Celeste
-    "Otras Zonas": "#E5E7EB" # Gris claro suave
+    "Zona 1": "#8FBC8B", "Zona 2": "#E4B56C", "Zona 3": "#192055",
+    "Zona 4": "#C9D8C5", "Zona 5": "#528797", "Zona 6": "#CBE0EE",
+    "Otras Zonas": "#E5E7EB"
 }
 
-# 5. MENÚ LATERAL INTERACTIVO
+# 6. MENÚ LATERAL INTERACTIVO
 st.sidebar.header("Filtros del Dashboard")
 zona_seleccionada = st.sidebar.selectbox(
     "Selecciona la Zona a visualizar:",
     ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
 )
 
-# 6. LÓGICA DE FILTRADO (Efecto Gris)
+# 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
 if zona_seleccionada != "Todas las Zonas":
     df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
+    # Aislar departamentos de la zona para numerarlos del 1 al N
+    df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
+    df_zona["Numero"] = range(1, len(df_zona) + 1)
+    df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", 0))
+    df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", 0))
 else:
     df["Visual_Zona"] = df["Zona"]
+    df_zona = pd.DataFrame() # Vacío si no hay zona seleccionada
 
-# 7. CREAR EL MAPA
+# 8. CREAR EL MAPA BASE
 fig = px.choropleth(
     df,
     geojson=colombia_geojson,
@@ -101,64 +125,76 @@ fig = px.choropleth(
     color="Visual_Zona",
     color_discrete_map=colores_invamer,
     hover_name="Departamento",
-    hover_data={
-        "DPT_GEOJSON": False, 
-        "Visual_Zona": False, 
-        "Zona": True, 
-        "Adulteración (%)": ':.2f', 
-        "Contrabando (%)": ':.2f'
-    }
+    hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f'}
 )
 
+# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA (Solo si hay zona seleccionada)
+if not df_zona.empty:
+    fig.add_trace(go.Scattergeo(
+        lon=df_zona["lon"],
+        lat=df_zona["lat"],
+        text=df_zona["Numero"].astype(str),
+        mode="markers+text",
+        textfont=dict(color="white", size=14, family="sans-serif", weight="bold"),
+        marker=dict(size=26, color="#000000", opacity=0.75, line=dict(width=2, color="white")),
+        textposition="middle center",
+        hoverinfo="skip",
+        showlegend=False
+    ))
+
 fig.update_geos(visible=False, fitbounds="locations")
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=500) 
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
 
-# 8. DISPOSICIÓN VISUAL (MAPA ARRIBA, CAJITAS ABAJO)
-st.plotly_chart(fig, use_container_width=True)
+# 10. DISPOSICIÓN VISUAL (Columnas: Izquierda Mapa, Derecha Cajitas)
+col1, col2 = st.columns([1.8, 1.2]) # Columna 1 más ancha para el mapa
 
-# 9. GENERACIÓN DE "CAJITAS" (Tarjetas de información por departamento)
-if zona_seleccionada != "Todas las Zonas":
-    st.markdown(f"### Detalle Departamental: {zona_seleccionada}")
-    
-    # Filtrar solo los departamentos de la zona seleccionada
-    df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento")
-    
-    # Obtener el color de la zona para pintar el borde de las cajitas
-    color_borde = colores_invamer[zona_seleccionada]
-    
-    # Crear un grid de columnas (4 columnas por fila queda muy elegante)
-    cols = st.columns(4)
-    
-    # Iterar sobre los departamentos usando iterrows() para evitar errores con caracteres especiales
-    for i, (index, row) in enumerate(df_zona.iterrows()):
+with col1:
+    st.plotly_chart(fig, use_container_width=True)
+
+with col2:
+    if zona_seleccionada != "Todas las Zonas":
+        st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
+        color_borde = colores_invamer[zona_seleccionada]
         
-        # Extraemos los valores llamando exactamente a la columna
-        depto_nombre = row["Departamento"]
-        adul_val = row["Adulteración (%)"]
-        contra_val = row["Contrabando (%)"]
+        # En el panel derecho creamos 2 columnas internas para que las cajitas no queden tan grandes
+        cajitas_cols = st.columns(2)
         
-        with cols[i % 4]: # Reparte las cajitas equitativamente en las 4 columnas
-            st.markdown(f"""
-            <div style="
-                border: 2px solid {color_borde}; 
-                border-top: 8px solid {color_borde};
-                border-radius: 8px; 
-                padding: 15px; 
-                margin-bottom: 20px; 
-                background-color: white; 
-                box-shadow: 2px 4px 10px rgba(0,0,0,0.1);">
-                <h4 style="margin-top: 0; color: #192055; text-align: center; font-family: sans-serif;">{depto_nombre}</h4>
-                <hr style="margin: 10px 0; border: 1px solid #E5E7EB;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Adulteración:</span>
-                    <span style="color: #B91C1C; font-weight: bold; font-size: 14px;">{adul_val:.2f}%</span>
+        for i, row in df_zona.iterrows():
+            depto_nombre = row["Departamento"]
+            adul_val = row["Adulteración (%)"]
+            contra_val = row["Contrabando (%)"]
+            num = row["Numero"]
+            
+            # Dibujar la cajita con el número
+            with cajitas_cols[i % 2]:
+                st.markdown(f"""
+                <div style="
+                    border: 1px solid #E5E7EB; 
+                    border-top: 6px solid {color_borde};
+                    border-radius: 6px; 
+                    padding: 12px; 
+                    margin-bottom: 15px; 
+                    background-color: white; 
+                    box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
+                    <h4 style="margin-top: 0; margin-bottom: 10px; color: #192055; font-family: sans-serif; font-size: 15px; display: flex; align-items: center;">
+                        <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; margin-right: 8px; font-size: 13px;">{num}</span>
+                        {depto_nombre}
+                    </h4>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #6B7280; font-size: 13px;">Adulteración:</span>
+                        <span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_val:.2f}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #6B7280; font-size: 13px;">Contrabando:</span>
+                        <span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_val:.2f}%</span>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #4B5563; font-weight: bold; font-size: 14px;">Contrabando:</span>
-                    <span style="color: #D97706; font-weight: bold; font-size: 14px;">{contra_val:.2f}%</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-else:
-    # Si "Todas las Zonas" está seleccionado, mostramos una tabla resumen general
-    st.info("👆 Selecciona una zona específica en el menú izquierdo para ver las tarjetas informativas de cada departamento.")
+                """, unsafe_allow_html=True)
+    else:
+        st.info("👆 Selecciona una zona en el menú izquierdo para ver el desglose de los departamentos en este panel.")
+
+st.markdown("---")
+st.markdown("### Base de Datos General")
+st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona"], errors='ignore').style.format({
+    "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%"
+}), use_container_width=True)
