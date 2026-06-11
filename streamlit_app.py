@@ -7,6 +7,18 @@ import requests
 # 1. Configuración de la página
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
+# --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT ---
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            /* Ocultar el botón flotante de Manage app */
+            .viewerBadge_container__1QSob {display: none !important;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
 st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
 
@@ -152,17 +164,18 @@ col1, col2 = st.columns([1.8, 1.2])
 
 with col1:
     st.plotly_chart(
-    fig, 
-    use_container_width=True,
-    config={
-        'toImageButtonOptions': {
-            'format': 'svg', # <-- CAMBIA 'png' POR 'svg'
-            'filename': f'mapa_{zona_seleccionada}',
-            'height': 800,
-            'width': 1200
+        fig, 
+        use_container_width=True,
+        config={
+            'toImageButtonOptions': {
+                'format': 'svg',
+                'filename': f'mapa_{zona_seleccionada}',
+                'height': 800,
+                'width': 1200
+            }
         }
-    }
-)
+    )
+
 with col2:
     if zona_seleccionada != "Todas las Zonas":
         st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
