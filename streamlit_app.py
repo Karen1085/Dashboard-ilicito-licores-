@@ -45,6 +45,7 @@ def load_and_fix_geojson():
 colombia_geojson = load_and_fix_geojson()
 
 # 3. Diccionario de coordenadas para poner los NÚMEROS sobre el mapa
+# Hemos movido San Andrés hacia el agua (noroeste de la isla reubicada) para que no tape nada.
 coords_dptos = {
     "Amazonas": {"lat": -1.0, "lon": -71.5}, "Antioquia": {"lat": 6.5, "lon": -75.3},
     "Arauca": {"lat": 6.5, "lon": -71.0}, "Atlántico": {"lat": 10.6, "lon": -75.0},
@@ -59,7 +60,8 @@ coords_dptos = {
     "Meta": {"lat": 3.5, "lon": -73.0}, "Nariño": {"lat": 1.5, "lon": -77.5},
     "Nte. Santander": {"lat": 8.0, "lon": -73.0}, "Putumayo": {"lat": 0.5, "lon": -76.0},
     "Quindío": {"lat": 4.5, "lon": -75.6}, "Risaralda": {"lat": 5.0, "lon": -76.0},
-    "San Andrés": {"lat": 11.55, "lon": -76.2}, "Santander": {"lat": 6.5, "lon": -73.0},
+    "San Andrés": {"lat": 12.2, "lon": -76.8}, # Pin movido fuera del mapa (en el mar)
+    "Santander": {"lat": 6.5, "lon": -73.0},
     "Sucre": {"lat": 9.0, "lon": -75.0}, "Tolima": {"lat": 4.0, "lon": -75.0},
     "Valle del Cauca": {"lat": 3.5, "lon": -76.5}, "Vaupés": {"lat": 0.5, "lon": -70.5},
     "Vichada": {"lat": 4.5, "lon": -69.5}
@@ -107,14 +109,13 @@ zona_seleccionada = st.sidebar.selectbox(
 # 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
 if zona_seleccionada != "Todas las Zonas":
     df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
-    # Aislar departamentos de la zona para numerarlos del 1 al N
     df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
     df_zona["Numero"] = range(1, len(df_zona) + 1)
     df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", 0))
     df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", 0))
 else:
     df["Visual_Zona"] = df["Zona"]
-    df_zona = pd.DataFrame() # Vacío si no hay zona seleccionada
+    df_zona = pd.DataFrame() 
 
 # 8. CREAR EL MAPA BASE
 fig = px.choropleth(
@@ -128,15 +129,15 @@ fig = px.choropleth(
     hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f'}
 )
 
-# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA (Solo si hay zona seleccionada)
+# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA (Tamaño reducido para elegancia)
 if not df_zona.empty:
     fig.add_trace(go.Scattergeo(
         lon=df_zona["lon"],
         lat=df_zona["lat"],
         text=df_zona["Numero"].astype(str),
         mode="markers+text",
-        textfont=dict(color="white", size=14, family="sans-serif", weight="bold"),
-        marker=dict(size=26, color="#000000", opacity=0.75, line=dict(width=2, color="white")),
+        textfont=dict(color="white", size=11, family="sans-serif", weight="bold"), # Texto más pequeño
+        marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1.5, color="white")), # Pin más pequeño
         textposition="middle center",
         hoverinfo="skip",
         showlegend=False
@@ -146,7 +147,7 @@ fig.update_geos(visible=False, fitbounds="locations")
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
 
 # 10. DISPOSICIÓN VISUAL (Columnas: Izquierda Mapa, Derecha Cajitas)
-col1, col2 = st.columns([1.8, 1.2]) # Columna 1 más ancha para el mapa
+col1, col2 = st.columns([1.8, 1.2])
 
 with col1:
     st.plotly_chart(fig, use_container_width=True)
@@ -156,7 +157,6 @@ with col2:
         st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
         color_borde = colores_invamer[zona_seleccionada]
         
-        # En el panel derecho creamos 2 columnas internas para que las cajitas no queden tan grandes
         cajitas_cols = st.columns(2)
         
         for i, row in df_zona.iterrows():
@@ -165,7 +165,6 @@ with col2:
             contra_val = row["Contrabando (%)"]
             num = row["Numero"]
             
-            # Dibujar la cajita con el número
             with cajitas_cols[i % 2]:
                 st.markdown(f"""
                 <div style="
