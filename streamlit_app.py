@@ -7,26 +7,36 @@ import requests
 st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
 
 st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
-st.markdown("Análisis geoespacial interactivo. *Nota: San Andrés ha sido reubicado visualmente para facilitar su lectura en el mapa nacional.*")
+st.markdown("Análisis geoespacial interactivo. *Nota: San Andrés ha sido reubicado y ampliado (escala 5x) visualmente para facilitar su lectura.*")
 
-# 2. Cargar el mapa GeoJSON de Colombia y ACERCAR SAN ANDRÉS
+# 2. Cargar el mapa GeoJSON de Colombia, ACERCAR y AGRANDAR SAN ANDRÉS
 @st.cache_data
 def load_and_fix_geojson():
     url = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json"
     geojson = requests.get(url).json()
     
-    # TRUCO CARTOGRÁFICO: Función recursiva para mover coordenadas
-    def shift_coords(coords, lon_shift, lat_shift):
+    # Parámetros matemáticos para la "Lupa" de San Andrés
+    lon_c, lat_c = -81.5, 12.5 # Centroide aproximado del archipiélago
+    scale_factor = 5.0         # Qué tan grande queremos hacer las islas (5 veces más grandes)
+    lon_shift = 5.5            # Movimiento hacia el Este (hacia el continente)
+    lat_shift = -1.0           # Movimiento hacia el Sur
+    
+    # Función recursiva para Escalar y Trasladar
+    def transform_coords(coords):
         if isinstance(coords[0], (int, float)):
-            return [coords[0] + lon_shift, coords[1] + lat_shift]
+            lon, lat = coords[0], coords[1]
+            # 1. Escalar (agrandar respecto al centroide)
+            lon_scaled = lon_c + (lon - lon_c) * scale_factor
+            lat_scaled = lat_c + (lat - lat_c) * scale_factor
+            # 2. Trasladar (mover a la costa)
+            return [lon_scaled + lon_shift, lat_scaled + lat_shift]
         else:
-            return [shift_coords(c, lon_shift, lat_shift) for c in coords]
+            return [transform_coords(c) for c in coords]
             
-    # Buscar San Andrés y moverlo más cerca de la costa continental
+    # Aplicar la transformación solo a San Andrés
     for feature in geojson['features']:
         if feature['properties']['NOMBRE_DPT'] == 'ARCHIPIELAGO DE SAN ANDRES PROVIDENCIA Y SANTA CATALINA':
-            # Sumamos +5.5 grados a la longitud (Este) y restamos -1.0 a la latitud (Sur)
-            feature['geometry']['coordinates'] = shift_coords(feature['geometry']['coordinates'], 5.5, -1.0)
+            feature['geometry']['coordinates'] = transform_coords(feature['geometry']['coordinates'])
             
     return geojson
 
@@ -72,7 +82,7 @@ metrica_seleccionada = st.sidebar.radio(
 
 escala_color = "YlOrRd" if metrica_seleccionada == "Adulteración (%)" else "YlGnBu"
 
-# 6. CREAR EL MAPA ÚNICO (Con San Andrés ya acercado)
+# 6. CREAR EL MAPA
 fig = px.choropleth(
     df_mapa,
     geojson=colombia_geojson,
@@ -94,7 +104,6 @@ col1, col2 = st.columns([2.5, 1])
 
 with col1:
     st.markdown(f"### Mapa de Calor Promedio: {metrica_seleccionada}")
-    # Al graficar, Plotly automáticamente hará zoom y San Andrés aparecerá grande al lado de la costa
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
