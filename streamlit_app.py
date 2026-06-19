@@ -8,7 +8,7 @@ import requests
 st.set_page_config(
     page_title="Dashboard Licores FND", 
     layout="wide", 
-    page_icon="📊",
+    page_icon="",
     initial_sidebar_state="expanded"  # <-- Corrección agregada para forzar el panel izquierdo
 )
 
