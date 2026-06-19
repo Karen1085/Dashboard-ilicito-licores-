@@ -24,7 +24,7 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-st.title("📊 Dashboard FND: Mercado Ilícito de Licores 2025")
+st.title("Dashboard Comercio ílicio de Licores FND-Datexco 2025")
 st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
