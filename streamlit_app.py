@@ -6,7 +6,7 @@ import requests
 
 # 1. Configuración de la página
 st.set_page_config(
-    page_title="Dashboard Licores FND", 
+    page_title="Dashboard Comercio ílicio de Licores FND-Datexco", 
     layout="wide", 
     page_icon="",
     initial_sidebar_state="expanded"  # <-- Corrección agregada para forzar el panel izquierdo
