@@ -3,17 +3,21 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-import requests
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Dashboard Licores FND", layout="wide", page_icon="📊")
+st.set_page_config(
+    page_title="Dashboard Licores FND", 
+    layout="wide", 
+    page_icon="📊",
+    initial_sidebar_state="expanded"  # <-- Corrección agregada para forzar el panel izquierdo
+)
 
 # --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
-            header {visibility: hidden;}
+            /* Se eliminó la línea que ocultaba el header para mantener el botón de la barra lateral */
             /* Ocultar el botón flotante de Manage app */
             .viewerBadge_container__1QSob {display: none !important;}
             </style>
@@ -215,7 +219,6 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        # TABLA HTML/CSS DISEÑADA A MEDIDA (Sin saltos de línea al inicio para evitar error Markdown)
         st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios de Ilicitud por Zonas</h3>", unsafe_allow_html=True)
         st.info("💡 Selecciona una zona específica en el menú izquierdo para ver el detalle interactivo por departamento.")
         
