@@ -6,9 +6,9 @@ import requests
 
 # 1. Configuración de la página
 st.set_page_config(
-    page_title="Dashboard Comercio ílicio de Licores FND-Datexco", 
+    page_title="Dashboard Comercio Ilícito de Licores FND-Datexco", 
     layout="wide", 
-    page_icon="",
+    page_icon="📊",
     initial_sidebar_state="expanded"
 )
 
@@ -22,8 +22,7 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-st.title("Dashboard Comercio ílicio de Licores FND-Datexco 2025")
-st.markdown("Análisis geoespacial interactivo. Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
+st.title("Dashboard Comercio Ilícito de Licores FND-Datexco 2025")
 
 # 2. Cargar el mapa GeoJSON, ACERCAR, AGRANDAR Y AGRUPAR LAS ISLAS
 @st.cache_data
@@ -86,18 +85,15 @@ coords_dptos = {
 def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
     
-    # Limpiar espacios ocultos en los nombres
     df.columns = df.columns.str.strip() 
     df["Departamento"] = df["Departamento"].astype(str).str.strip() 
     
-    # Homologar nombres de departamentos problemáticos
     df["Departamento"] = df["Departamento"].replace({
         "Norte de Santander": "Nte. Santander", 
         "Bogotá": "Bogotá D.C.",
         "Archipiélago de San Andrés, Providencia y Santa Catalina": "San Andrés"
     })
     
-    # Dejamos las celdas vacías como NaN para que no afecten el promedio
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
     df["Falsificación (%)"] = df["Falsificación"] * 100 
@@ -127,153 +123,214 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
-# 6. MENÚ LATERAL INTERACTIVO
-st.sidebar.header("Filtros del Dashboard")
-zona_seleccionada = st.sidebar.selectbox(
-    "Selecciona la Zona a visualizar:",
-    ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
-)
+# --- CREACIÓN DE PÁGINAS MEDIANTE PESTAÑAS (TABS) ---
+pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
 
-# 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
-# Al usar .mean(), Pandas ignora automáticamente los valores nulos (NaN)
-df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
-
-if zona_seleccionada != "Todas las Zonas":
-    df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
-    df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
-    df_zona["Numero"] = range(1, len(df_zona) + 1)
+# ==============================================================================
+# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL ORIGINAL
+# ==============================================================================
+with pag1:
+    st.markdown("### Análisis geoespacial interactivo")
+    st.markdown("Seleccione una Zona en el menú izquierdo para ver el detalle en el panel derecho.")
     
-    df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", None))
-    df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", None))
-else:
-    df["Visual_Zona"] = df["Zona"]
-    df_zona = pd.DataFrame() 
-
-# 8. CREAR EL MAPA BASE
-fig = px.choropleth(
-    df,
-    geojson=colombia_geojson,
-    featureidkey="properties.NOMBRE_DPT",
-    locations="DPT_GEOJSON",
-    color="Visual_Zona",
-    color_discrete_map=colores_invamer,
-    hover_name="Departamento",
-    hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f', "Falsificación (%)": ':.2f'}
-)
-
-# 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA
-if not df_zona.empty:
-    fig.add_trace(go.Scattergeo(
-        lon=df_zona["lon"],
-        lat=df_zona["lat"],
-        text=df_zona["Numero"].astype(str),
-        mode="markers+text",
-        textfont=dict(color="white", size=11, family="sans-serif", weight="bold"),
-        marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1.5, color="white")),
-        textposition="middle center",
-        hoverinfo="skip",
-        showlegend=False
-    ))
-
-fig.update_geos(visible=False, fitbounds="locations")
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
-
-# 10. DISPOSICIÓN VISUAL (Columnas: Izquierda Mapa, Derecha Cajitas/Tabla)
-col1, col2 = st.columns([1.8, 1.2])
-
-with col1:
-    st.plotly_chart(
-        fig, 
-        use_container_width=True,
-        config={
-            'toImageButtonOptions': {
-                'format': 'svg',
-                'filename': f'mapa_{zona_seleccionada}',
-                'height': 800,
-                'width': 1200
-            }
-        }
+    # Filtro exclusivo de Zona para esta pestaña (en la barra lateral)
+    st.sidebar.markdown("---")
+    st.sidebar.header("Filtro de Zona (Mapa)")
+    zona_seleccionada = st.sidebar.selectbox(
+        "Visualizar en pestaña 1:",
+        ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
     )
 
-with col2:
-    if zona_seleccionada != "Todas las Zonas":
-        st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
-        color_borde = colores_invamer[zona_seleccionada]
-        
-        cajitas_cols = st.columns(2)
-        
-        for i, row in df_zona.iterrows():
-            depto_nombre = row["Departamento"]
-            num = row["Numero"]
-            
-            # --- PROTECCIÓN PARA MOSTRAR "N/A" SI EL DATO ESTÁ VACÍO ---
-            adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
-            contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
-            falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
-            
-            with cajitas_cols[i % 2]:
-                st.markdown(f"""
-                <div style="
-                    border: 1px solid #E5E7EB; 
-                    border-top: 6px solid {color_borde};
-                    border-radius: 6px; 
-                    padding: 12px; 
-                    margin-bottom: 15px; 
-                    background-color: white; 
-                    box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
-                    <h4 style="margin-top: 0; margin-bottom: 10px; color: #192055; font-family: sans-serif; font-size: 15px; display: flex; align-items: center;">
-                        <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; margin-right: 8px; font-size: 13px;">{num}</span>
-                        {depto_nombre}
-                    </h4>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="color: #6B7280; font-size: 13px;">Adulteración:</span>
-                        <span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_text}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="color: #6B7280; font-size: 13px;">Contrabando:</span>
-                        <span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_text}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #6B7280; font-size: 13px;">Falsificación:</span>
-                        <span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_text}</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios de Ilicitud por Zonas</h3>", unsafe_allow_html=True)
-        st.info("💡 Selecciona una zona específica en el menú izquierdo para ver el detalle interactivo por departamento.")
-        
-        html_table = "<style>"
-        html_table += ".styled-table { border-collapse: collapse; margin: 15px 0; font-size: 14px; font-family: sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px 8px 0 0; overflow: hidden; }"
-        html_table += ".styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }"
-        html_table += ".styled-table th, .styled-table td { padding: 14px 15px; }"
-        html_table += ".styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }"
-        html_table += ".styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }"
-        html_table += ".styled-table tbody tr:hover { background-color: #f1f5f9; }"
-        html_table += "</style>"
-        html_table += "<table class='styled-table'>"
-        html_table += "<thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
-        
-        for index, row in df_promedios.iterrows():
-            zona = row["Zona"]
-            adul = row["Adulteración (%)"]
-            contra = row["Contrabando (%)"]
-            falsi = row["Falsificación (%)"] 
-            color_zona = colores_invamer.get(zona, "#000000")
-            
-            # Formateamos protegiendo en caso de que alguna zona completa estuviera sin datos (aunque no es el caso actual)
-            adul_text = f"{adul:.2f}%" if pd.notna(adul) else "N/A"
-            contra_text = f"{contra:.2f}%" if pd.notna(contra) else "N/A"
-            falsi_text = f"{falsi:.2f}%" if pd.notna(falsi) else "N/A"
-            
-            html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
-            
-        html_table += "</tbody></table>"
-        st.markdown(html_table, unsafe_allow_html=True)
+    df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
+    if zona_seleccionada != "Todas las Zonas":
+        df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
+        df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
+        df_zona["Numero"] = range(1, len(df_zona) + 1)
+        df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", None))
+        df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", None))
+    else:
+        df["Visual_Zona"] = df["Zona"]
+        df_zona = pd.DataFrame() 
+
+    fig = px.choropleth(
+        df, geojson=colombia_geojson, featureidkey="properties.NOMBRE_DPT", locations="DPT_GEOJSON",
+        color="Visual_Zona", color_discrete_map=colores_invamer, hover_name="Departamento",
+        hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f', "Falsificación (%)": ':.2f'}
+    )
+
+    if not df_zona.empty:
+        fig.add_trace(go.Scattergeo(
+            lon=df_zona["lon"], lat=df_zona["lat"], text=df_zona["Numero"].astype(str),
+            mode="markers+text", textfont=dict(color="white", size=11, family="sans-serif", weight="bold"),
+            marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1.5, color="white")),
+            textposition="middle center", hoverinfo="skip", showlegend=False
+        ))
+
+    fig.update_geos(visible=False, fitbounds="locations")
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
+
+    col1, col2 = st.columns([1.8, 1.2])
+
+    with col1:
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        if zona_seleccionada != "Todas las Zonas":
+            st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
+            color_borde = colores_invamer[zona_seleccionada]
+            cajitas_cols = st.columns(2)
+            
+            for i, row in df_zona.iterrows():
+                depto_nombre = row["Departamento"]
+                num = row["Numero"]
+                adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
+                contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
+                falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
+                
+                with cajitas_cols[i % 2]:
+                    st.markdown(f"""
+                    <div style="border: 1px solid #E5E7EB; border-top: 6px solid {color_borde}; border-radius: 6px; padding: 12px; margin-bottom: 15px; background-color: white; box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: #192055; font-family: sans-serif; font-size: 15px; display: flex; align-items: center;">
+                            <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; margin-right: 8px; font-size: 13px;">{num}</span>
+                            {depto_nombre}
+                        </h4>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span style="color: #6B7280; font-size: 13px;">Adulteración:</span><span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_text}</span></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span style="color: #6B7280; font-size: 13px;">Contrabando:</span><span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_text}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #6B7280; font-size: 13px;">Falsificación:</span><span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_text}</span></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios de Ilicitud por Zonas</h3>", unsafe_allow_html=True)
+            st.info("💡 Selecciona una zona específica en el menú izquierdo para ver el detalle interactivo por departamento.")
+            
+            html_table = "<style>.styled-table { border-collapse: collapse; margin: 15px 0; font-size: 14px; font-family: sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px 8px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 14px 15px; }.styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }.styled-table tbody tr:hover { background-color: #f1f5f9; }</style>"
+            html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
+            
+            for index, row in df_promedios.iterrows():
+                zona = row["Zona"]
+                color_zona = colores_invamer.get(zona, "#000000")
+                adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
+                contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
+                falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
+                html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
+            html_table += "</tbody></table>"
+            st.markdown(html_table, unsafe_allow_html=True)
+
+# ==============================================================================
+# PÁGINA 2: NUEVO FILTRO POR TIPO DE ILÍCITO Y TOPS
+# ==============================================================================
+with pag2:
+    st.markdown("### Ranking de Severidad por Tipo de Ilícito")
+    st.markdown("Selecciona una métrica para reorganizar las zonas y departamentos de mayor a menor impacto.")
+    
+    # Selector de ilícito único para esta pestaña
+    ilicito_elegido = st.selectbox(
+        "Seleccione el fenómeno ilícito a evaluar:",
+        ["Falsificación (%)", "Contrabando (%)", "Adulteración (%)"]
+    )
+    
+    col_bar1, col_bar2 = st.columns(2)
+    
+    with col_bar1:
+        st.markdown(f"#### Top Departamentos con mayor {ilicito_elegido.split()[0]}")
+        # Filtrar datos válidos para graficar
+        df_dept_sorted = df[df[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
+        
+        fig_dept = px.bar(
+            df_dept_sorted, x=ilicito_elegido, y="Departamento", orientation='h',
+            title=f"Porcentaje por Departamento",
+            labels={ilicito_elegido: "Porcentaje (%)"},
+            color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
+        )
+        fig_dept.update_layout(height=650, margin={"l": 150, "r": 20, "t": 40, "b": 40})
+        st.plotly_chart(fig_dept, use_container_width=True)
+        
+    with col_bar2:
+        st.markdown(f"#### Top de Zonas FND")
+        df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
+        
+        fig_zona_bar = px.bar(
+            df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
+            title=f"Promedio por Zona FND",
+            labels={ilicito_elegido: "Promedio (%)"},
+            color="Zona", color_discrete_map=colores_invamer
+        )
+        fig_zona_bar.update_layout(height=400, margin={"l": 100, "r": 20, "t": 40, "b": 40})
+        st.plotly_chart(fig_zona_bar, use_container_width=True)
+
+# ==============================================================================
+# PÁGINA 3: COMPARATIVA DE UN DEPARTAMENTO VS ZONA VS NACIONAL
+# ==============================================================================
+with pag3:
+    st.markdown("### Ficha Comparativa por Departamento")
+    st.markdown("Selecciona un departamento específico para ver sus desviaciones frente a sus pares regionales y al promedio de todo el país.")
+    
+    # Selector de departamento ordenado alfabéticamente
+    depto_seleccionado = st.selectbox(
+        "Seleccione un Departamento para analizar:",
+        sorted(df["Departamento"].unique())
+    )
+    
+    # Extraer datos específicos
+    fila_depto = df[df["Departamento"] == depto_seleccionado].iloc[0]
+    zona_del_depto = fila_depto["Zona"]
+    
+    # Calcular promedios nacionales (ignora NaNs automáticamente)
+    promedios_nacionales = df[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean()
+    # Calcular promedio de la zona específica
+    promedios_zona_especifica = df_promedios[df_promedios["Zona"] == zona_del_depto].iloc[0]
+    
+    st.markdown(f"#### 📍 Resultados para {depto_seleccionado} <small>(Pertenece a la **{zona_del_depto}**)</small>", unsafe_allow_html=True)
+    
+    # Función para dar formato a los deltas (ej: "+2.50%" o "-1.20%")
+    def format_delta(valor_depto, valor_comparacion):
+        if pd.isna(valor_depto) or pd.isna(valor_comparacion):
+            return "N/A"
+        diff = valor_depto - valor_comparacion
+        return f"{diff:+.2f}%"
+
+    metrics = ["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]
+    col_metrics = st.columns(3)
+    
+    for idx, metric in enumerate(metrics):
+        nombre_limpio = metric.split()[0]
+        val_depto = fila_depto[metric]
+        val_zona = promedios_zona_especifica[metric]
+        val_nac = promedios_nacionales[metric]
+        
+        with col_metrics[idx]:
+            # Contenedor visual para cada indicador estadístico
+            st.markdown(f"""
+            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; background-color: #F8FAFC; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <h3 style="margin: 0 0 15px 0; color: #192055; font-size: 18px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;">{nombre_limpio}</h3>
+                <p style="margin: 0; font-size: 13px; color: #6B7280;">Valor Departamento:</p>
+                <p style="margin: 0 0 15px 0; font-size: 32px; font-weight: bold; color: #0F172A;">
+                    {f'{val_depto:.2f}%' if pd.notna(val_depto) else 'N/A'}
+                </p>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; background: white; padding: 6px 10px; border-radius: 4px; border: 1px solid #F1F5F9;">
+                    <span style="font-size: 13px; color: #475569;">Vs. Promedio {zona_del_depto}:</span>
+                    <span style="font-size: 13px; font-weight: bold; color: {'#B91C1C' if pd.notna(val_depto) and val_depto > val_zona else '#15803D'};">
+                        {format_delta(val_depto, val_zona)}
+                    </span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; background: white; padding: 6px 10px; border-radius: 4px; border: 1px solid #F1F5F9;">
+                    <span style="font-size: 13px; color: #475569;">Vs. Promedio Nacional:</span>
+                    <span style="font-size: 13px; font-weight: bold; color: {'#B91C1C' if pd.notna(val_depto) and val_depto > val_nac else '#15803D'};">
+                        {format_delta(val_depto, val_nac)}
+                    </span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+# ==============================================================================
+# PIE DE PÁGINA COMÚN: BASE DE DATOS GENERAL
+# ==============================================================================
 st.markdown("---")
 st.markdown("### Base de Datos General")
 st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona", "Numero", "lat", "lon"], errors='ignore').style.format({
     "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Falsificación": "{:.2%}",
     "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%", "Falsificación (%)": "{:.2f}%"
-}, na_rep="N/A"), use_container_width=True) # <-- Añadimos na_rep="N/A" para que la tabla final también se vea limpia
+}, na_rep="N/A"), use_container_width=True)
