@@ -148,7 +148,7 @@ st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_all
 pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
 
 # ==============================================================================
-# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL (TARJETAS ULTRA COMPACTAS)
+# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL 
 # ==============================================================================
 with pag1:
     col_filtro1, _ = st.columns([1, 4]) 
@@ -180,16 +180,17 @@ with pag1:
     if not df_zona.empty:
         fig.add_trace(go.Scattergeo(
             lon=df_zona["lon"], lat=df_zona["lat"], text=df_zona["Numero"].astype(str),
-            mode="markers+text", textfont=dict(color="white", size=10, family="sans-serif", weight="bold"),
-            marker=dict(size=16, color="#000000", opacity=0.8, line=dict(width=1, color="white")),
+            mode="markers+text", textfont=dict(color="white", size=11, family="sans-serif", weight="bold"),
+            marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1, color="white")),
             textposition="middle center", hoverinfo="skip", showlegend=False
         ))
 
     fig.update_geos(visible=False, fitbounds="locations")
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
+    # Aumentamos la altura del mapa para que sea más imponente
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=500, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
-    # Proporción de la pantalla: mapa izquierda, 2 columnas puras a la derecha
-    col_mapa, col_datos = st.columns([1.1, 1.9]) 
+    # --- NUEVA PROPORCIÓN: El mapa (1.4) tiene mucho más espacio frente a las cajitas (1.6) ---
+    col_mapa, col_datos = st.columns([1.4, 1.6]) 
     with col_mapa:
         st.plotly_chart(fig, use_container_width=True)
 
@@ -198,29 +199,26 @@ with pag1:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
             
-            # --- CREAMOS 2 COLUMNAS PURAS SIN CONTENEDORES CON SCROLL ---
             cajitas_cols = st.columns(2)
             
-            for i, row in df_zona.iterrows():
+            # SOLUCIÓN DEL APILAMIENTO: Usamos enumerate para que se asigne exactamente 1 izquierda, 1 derecha.
+            for seq_i, (index, row) in enumerate(df_zona.iterrows()):
                 depto_nombre = row["Departamento"]
                 num = row["Numero"]
                 adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                # Tarjeta ultra-compacta: borde a la izquierda en vez de arriba, márgenes de 4px
-                html_card = f"""
-                <div style="border: 1px solid #E5E7EB; border-left: 4px solid {color_borde}; border-radius: 4px; padding: 4px 10px; margin-bottom: 6px; background-color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);">
-                    <div style="display: flex; align-items: center; margin-bottom: 2px;">
-                        <span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 14px; height: 14px; display: inline-block; text-align: center; line-height: 14px; margin-right: 6px; font-size: 9px; font-weight: bold;">{num}</span>
-                        <span style="color: #1e293b; font-family: sans-serif; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{depto_nombre}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 11px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 11px;">{adul_text}</span></div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 11px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 11px;">{contra_text}</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 11px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 11px;">{falsi_text}</span></div>
-                </div>
-                """
-                with cajitas_cols[i % 2]:
+                # Tarjeta miniatura: text-size muy compacto
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-left: 4px solid {color_borde}; border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; background-color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);">
+<h4 style="margin: 0 0 2px 0; color: #1e293b; font-family: sans-serif; font-size: 11px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 14px; height: 14px; display: inline-block; text-align: center; line-height: 14px; margin-right: 5px; font-size: 8px; font-weight: bold;">{num}</span>{depto_nombre}</h4>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 10px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 10px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 10px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 10px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 10px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 10px;">{falsi_text}</span></div></div>"""
+                
+                # seq_i es secuencial (0, 1, 2, 3...) asegurando un balance perfecto
+                with cajitas_cols[seq_i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
@@ -249,9 +247,9 @@ with pag2:
         )
     
     st.markdown("<br>", unsafe_allow_html=True)
-    col_mapa, col_cuadros = st.columns([1.1, 1])
+    col_mapa2, col_cuadros2 = st.columns([1.2, 1])
     
-    with col_mapa:
+    with col_mapa2:
         st.markdown(f"<div style='{widget_title_style}'>🗺️ Mapa de Calor ({ilicito_elegido.split()[0]})</div>", unsafe_allow_html=True)
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
@@ -266,10 +264,10 @@ with pag2:
             hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.1f'}
         )
         fig_heat.update_geos(visible=False, fitbounds="locations")
-        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=500, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=12))
+        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=550, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=12))
         st.plotly_chart(fig_heat, use_container_width=True)
 
-    with col_cuadros:
+    with col_cuadros2:
         st.markdown(f"<div style='{widget_title_style}'>🏆 Ranking de Departamentos</div>", unsafe_allow_html=True)
         df_dept_sorted = df[df[ilicito_elegido].notna()][["Departamento", ilicito_elegido]].sort_values(by=ilicito_elegido, ascending=False)
         df_dept_sorted.reset_index(drop=True, inplace=True)
@@ -278,7 +276,7 @@ with pag2:
         st.dataframe(
             df_dept_sorted.style.format({ilicito_elegido: "{:.2f}%"}),
             use_container_width=True,
-            height=280 
+            height=300 
         )
         
         st.markdown(f"<div style='{widget_title_style} margin-top: 10px;'>📊 Promedios de Zonas FND</div>", unsafe_allow_html=True)
@@ -289,11 +287,11 @@ with pag2:
             color="Zona", color_discrete_map=colores_invamer
         )
         fig_zona_bar.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=11)
-        fig_zona_bar.update_layout(height=220, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        fig_zona_bar.update_layout(height=230, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
-# PÁGINA 3: COMPARATIVA INTELIGENTE (HTML REPARADO ALINEADO A LA IZQUIERDA)
+# PÁGINA 3: COMPARATIVA INTELIGENTE 
 # ==============================================================================
 with pag3:
     col_filtro3, _ = st.columns([1, 4])
@@ -328,7 +326,6 @@ with pag3:
                 color_d_zona = "#b91c1c" if delta_zona > 0 else "#15803d"
                 color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
                 
-                # HTML TOTALMENTE SIN SANGRÍA PARA EVITAR EL ERROR DE STREAMLIT
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
 <h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
 <h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
