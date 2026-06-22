@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Dashboard Comercio ílicio de Licores FND-Datexco", 
     layout="wide", 
     page_icon="",
-    initial_sidebar_state="expanded"  # <-- Corrección agregada para forzar el panel izquierdo
+    initial_sidebar_state="expanded"
 )
 
 # --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT ---
@@ -17,8 +17,6 @@ hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
-            /* Se eliminó la línea que ocultaba el header para mantener el botón de la barra lateral */
-            /* Ocultar el botón flotante de Manage app */
             .viewerBadge_container__1QSob {display: none !important;}
             </style>
             """
@@ -87,9 +85,21 @@ coords_dptos = {
 @st.cache_data
 def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
+    
+    # Limpiar espacios ocultos en los nombres de las columnas y departamentos
+    df.columns = df.columns.str.strip() 
+    df["Departamento"] = df["Departamento"].astype(str).str.strip() 
+    
+    # Homologar nombres de departamentos problemáticos
+    df["Departamento"] = df["Departamento"].replace({
+        "Norte de Santander": "Nte. Santander", 
+        "Bogotá": "Bogotá D.C.",
+        "San Andrés y Providencia": "San Andrés"
+    })
+    
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
-    df["Falsificación (%)"] = df["Falsificación"] * 100 # --- NUEVA COLUMNA AÑADIDA ---
+    df["Falsificación (%)"] = df["Falsificación"] * 100 
     
     mapeo_nombres = {
         "Antioquia": "ANTIOQUIA", "Atlántico": "ATLANTICO", "Bogotá D.C.": "SANTAFE DE BOGOTA D.C",
@@ -124,15 +134,16 @@ zona_seleccionada = st.sidebar.selectbox(
 )
 
 # 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
-# --- SE AÑADIÓ FALSIFICACIÓN AL GRUPO DE PROMEDIOS ---
 df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
 if zona_seleccionada != "Todas las Zonas":
     df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
     df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
     df_zona["Numero"] = range(1, len(df_zona) + 1)
-    df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", 0))
-    df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", 0))
+    
+    # Usar None en lugar de 0 para evitar que Plotly aleje el mapa si no encuentra la coordenada
+    df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", None))
+    df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", None))
 else:
     df["Visual_Zona"] = df["Zona"]
     df_zona = pd.DataFrame() 
@@ -146,7 +157,6 @@ fig = px.choropleth(
     color="Visual_Zona",
     color_discrete_map=colores_invamer,
     hover_name="Departamento",
-    # --- SE AÑADIÓ FALSIFICACIÓN AL HOVER DEL MAPA ---
     hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f', "Falsificación (%)": ':.2f'}
 )
 
@@ -195,7 +205,7 @@ with col2:
             depto_nombre = row["Departamento"]
             adul_val = row["Adulteración (%)"]
             contra_val = row["Contrabando (%)"]
-            falsi_val = row["Falsificación (%)"] # --- VARIABLE AÑADIDA ---
+            falsi_val = row["Falsificación (%)"]
             num = row["Numero"]
             
             with cajitas_cols[i % 2]:
@@ -239,17 +249,15 @@ with col2:
         html_table += ".styled-table tbody tr:hover { background-color: #f1f5f9; }"
         html_table += "</style>"
         html_table += "<table class='styled-table'>"
-        # --- SE AÑADIÓ LA COLUMNA AL ENCABEZADO DE LA TABLA ---
         html_table += "<thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
         
         for index, row in df_promedios.iterrows():
             zona = row["Zona"]
             adul = row["Adulteración (%)"]
             contra = row["Contrabando (%)"]
-            falsi = row["Falsificación (%)"] # --- VARIABLE AÑADIDA ---
+            falsi = row["Falsificación (%)"] 
             color_zona = colores_invamer.get(zona, "#000000")
             
-            # --- SE AÑADIÓ LA CELDA DE FALSIFICACIÓN A LA TABLA ---
             html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul:.2f}%</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra:.2f}%</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi:.2f}%</td></tr>"
             
         html_table += "</tbody></table>"
@@ -257,7 +265,6 @@ with col2:
 
 st.markdown("---")
 st.markdown("### Base de Datos General")
-# --- SE AÑADIÓ FALSIFICACIÓN AL FORMATEO DEL DATAFRAME FINAL ---
 st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona", "Numero", "lat", "lon"], errors='ignore').style.format({
     "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Falsificación": "{:.2%}",
     "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%", "Falsificación (%)": "{:.2f}%"
