@@ -148,7 +148,7 @@ st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_all
 pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
 
 # ==============================================================================
-# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
+# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL (CON SCROLL INTERNO)
 # ==============================================================================
 with pag1:
     col_filtro1, _ = st.columns([1, 4]) 
@@ -188,7 +188,7 @@ with pag1:
     fig.update_geos(visible=False, fitbounds="locations")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
-    # --- CAMBIO DE PROPORCIÓN: 3 Columnas para las tarjetas para evitar Scroll en Zona 4 ---
+    # --- VOLVEMOS A 2 COLUMNAS GENERALES PARA QUE EL MAPA TENGA ESPACIO ---
     col_mapa, col_datos = st.columns([1.1, 1.9]) 
     with col_mapa:
         st.plotly_chart(fig, use_container_width=True)
@@ -198,8 +198,9 @@ with pag1:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
             
-            # --- TRES COLUMNAS EN LUGAR DE DOS ---
-            cajitas_cols = st.columns(3)
+            # --- LA SOLUCIÓN: UN CONTENEDOR CON SCROLL DE 400px DE ALTO ---
+            cont_scroll = st.container(height=400)
+            cajitas_cols = cont_scroll.columns(2)
             
             for i, row in df_zona.iterrows():
                 depto_nombre = row["Departamento"]
@@ -208,14 +209,13 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                # Tarjetas más compactas
-                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 3px solid {color_borde}; border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);">
-<h4 style="margin: 0 0 4px 0; color: #1e293b; font-family: sans-serif; font-size: 12px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 16px; height: 16px; display: inline-block; text-align: center; line-height: 16px; margin-right: 4px; font-size: 9px;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 10px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 10px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 10px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 10px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 10px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 10px;">{falsi_text}</span></div></div>"""
-                with cajitas_cols[i % 3]:
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid {color_borde}; border-radius: 4px; padding: 10px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 4px rgba(0,0,0,0.05);">
+<h4 style="margin: 0 0 8px 0; color: #1e293b; font-family: sans-serif; font-size: 14px; display: flex; align-items: center;">
+<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; margin-right: 6px; font-size: 10px;">{num}</span>{depto_nombre}</h4>
+<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #64748b; font-size: 12px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 12px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #64748b; font-size: 12px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 12px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 12px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 12px;">{falsi_text}</span></div></div>"""
+                with cajitas_cols[i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
@@ -288,7 +288,7 @@ with pag2:
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
-# PÁGINA 3: COMPARATIVA INTELIGENTE (SIN REPETICIONES)
+# PÁGINA 3: COMPARATIVA INTELIGENTE (HTML REPARADO)
 # ==============================================================================
 with pag3:
     col_filtro3, _ = st.columns([1, 4])
@@ -306,7 +306,6 @@ with pag3:
     
     st.markdown(f"<div style='{widget_title_style} margin-top: 15px; font-size: 15px;'>Ficha Técnica: {depto_seleccionado} ({zona_del_depto})</div>", unsafe_allow_html=True)
     
-    # --- REDISEÑO: UNA SOLA FILA CON 3 TARJETAS COMPLETAS ---
     col1, col2, col3 = st.columns(3)
     metricas = [("Adulteración (%)", col1), ("Contrabando (%)", col2), ("Falsificación (%)", col3)]
     
@@ -318,31 +317,27 @@ with pag3:
         
         with col:
             if pd.notna(v_depto):
-                # Calcular deltas matemáticos
                 delta_zona = v_depto - v_zona
                 delta_nac = v_depto - v_nac
                 
-                # Asignar colores lógicos (Rojo si es mayor/peor, Verde si es menor/mejor)
                 color_d_zona = "#b91c1c" if delta_zona > 0 else "#15803d"
                 color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
                 
-                html_card = f"""
-                <div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
-                    <h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
-                    
-                    <div style="background-color: #f8fafc; padding: 10px; border-radius: 6px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
-                            <span style="color: #475569;">Promedio {zona_del_depto}: <strong style="color:#0f172a;">{v_zona:.2f}%</strong></span>
-                            <span style="font-weight: bold; color: {color_d_zona};">{delta_zona:+.2f}%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #475569;">Promedio Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
-                            <span style="font-weight: bold; color: {color_d_nac};">{delta_nac:+.2f}%</span>
-                        </div>
-                    </div>
-                </div>
-                """
+                # HTML PEGADO TOTALMENTE A LA IZQUIERDA PARA QUE STREAMLIT NO LO DAÑE
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+<h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
+<h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
+<div style="background-color: #f8fafc; padding: 10px; border-radius: 6px;">
+<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+<span style="color: #475569;">Promedio {zona_del_depto}: <strong style="color:#0f172a;">{v_zona:.2f}%</strong></span>
+<span style="font-weight: bold; color: {color_d_zona};">{delta_zona:+.2f}%</span>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 13px;">
+<span style="color: #475569;">Promedio Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
+<span style="font-weight: bold; color: {color_d_nac};">{delta_nac:+.2f}%</span>
+</div>
+</div>
+</div>"""
                 st.markdown(html_card, unsafe_allow_html=True)
             else:
                 st.info(f"Sin datos registrados para {nombre_metrica}.")
