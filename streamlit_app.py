@@ -10,19 +10,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS AGRESIVO PARA DISEÑO PREMIUM Y UNIFICACIÓN DE COLOR ---
+# --- CSS AGRESIVO PARA DISEÑO PREMIUM Y OCULTAR MARCAS DE AGUA ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;} 
             
+            /* Ocultar elementos inyectados por Streamlit Cloud (Botones, Avatar, Coronas) */
             .stDeployButton {display: none !important;}
             [data-testid="stToolbar"] {display: none !important;}
             [data-testid="manage-app-button"] {display: none !important;}
-            .viewerBadge_container__1QSob {display: none !important;}
+            [class*="viewerBadge"] {display: none !important;}
+            [class*="CreatorBadge"] {display: none !important;}
+            [class*="creatorBadge"] {display: none !important;}
+            a[href*="streamlit.io/cloud"] {display: none !important;}
             #stDecoration {display: none !important;}
             
+            /* Ajuste de márgenes del lienzo */
             .block-container {
                 padding-top: 1.5rem !important; 
                 padding-bottom: 0rem !important; 
@@ -337,7 +342,6 @@ with pag3:
                 delta_zona = v_depto - v_zona
                 delta_nac = v_depto - v_nac
                 
-                # Criterio: Rojo si el ilícito es mayor al promedio, Verde si es menor.
                 color_d_zona = "#b91c1c" if delta_zona > 0 else "#15803d"
                 color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
                 
