@@ -16,10 +16,9 @@ hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
-            header {visibility: hidden;} /* Oculta la barra superior de Streamlit */
+            header {visibility: hidden;} 
             .viewerBadge_container__1QSob {display: none !important;}
             
-            /* Eliminar márgenes superiores e inferiores del contenedor principal */
             .block-container {
                 padding-top: 1rem !important; 
                 padding-bottom: 0rem !important; 
@@ -28,15 +27,12 @@ hide_st_style = """
                 max-width: 100% !important;
             }
             
-            /* Reducir espacio debajo de las pestañas */
             .stTabs [data-baseweb="tab-list"] {margin-bottom: 0px;}
             .stTabs [data-baseweb="tab-panel"] {padding-top: 0px;}
             
-            /* Reducir espacio de los títulos (Markdown) */
             h1 {margin-bottom: 0px !important; padding-bottom: 5px !important;}
             h3, h4 {margin-bottom: 0px !important; padding-bottom: 2px !important; margin-top: 5px !important;}
             
-            /* Ajustar el espacio del Selectbox */
             .stSelectbox {margin-bottom: 0px !important;}
             div[data-testid="stVerticalBlock"] {gap: 0.5rem !important;}
             </style>
@@ -52,10 +48,10 @@ def load_and_fix_geojson():
     def transform_coords(coords):
         if isinstance(coords[0], (int, float)):
             lon, lat = coords[0], coords[1]
-            if lat > 13.0: # Providencia
+            if lat > 13.0: 
                 lon_c, lat_c = -81.37, 13.35
                 lon_c_new, lat_c_new = -81.60, 12.85 
-            else: # San Andrés
+            else: 
                 lon_c, lat_c = -81.70, 12.55
                 lon_c_new, lat_c_new = -81.70, 12.55
             scale_factor = 5.0
@@ -147,12 +143,12 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 # PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
 # ==============================================================================
 with pag1:
-    col_filtro1, _ = st.columns([1, 3]) # Filtro aún más estrecho
+    col_filtro1, _ = st.columns([1, 3])
     with col_filtro1:
         zona_seleccionada = st.selectbox(
             "📍 Seleccione la Zona:",
             ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"],
-            label_visibility="collapsed" # Ocultar etiqueta para ahorrar espacio vertical
+            label_visibility="collapsed"
         )
     
     df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
@@ -182,10 +178,9 @@ with pag1:
         ))
 
     fig.update_geos(visible=False, fitbounds="locations")
-    # Mapa súper compacto
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450) 
 
-    col1, col2 = st.columns([1.5, 1.5]) # Distribuir espacio equitativamente
+    col1, col2 = st.columns([1.5, 1.5]) 
     with col1:
         st.plotly_chart(fig, use_container_width=True)
 
@@ -202,7 +197,6 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                # Tarjetas HTML minimalistas
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid {color_borde}; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 4px rgba(0,0,0,0.05);">
 <h4 style="margin: 0 0 4px 0; color: #192055; font-family: sans-serif; font-size: 13px; display: flex; align-items: center;">
 <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 16px; height: 16px; display: inline-block; text-align: center; line-height: 16px; margin-right: 4px; font-size: 10px;">{num}</span>{depto_nombre}</h4>
@@ -226,7 +220,7 @@ with pag1:
             st.markdown(html_table, unsafe_allow_html=True)
 
 # ==============================================================================
-# PÁGINA 2: TOPS DE ILÍCITOS
+# PÁGINA 2: NUEVO DISEÑO DE TOPS Y MAPA DE CALOR
 # ==============================================================================
 with pag2:
     col_filtro2, _ = st.columns([1, 3])
@@ -237,33 +231,11 @@ with pag2:
             label_visibility="collapsed"
         )
     
-    col_bar1, col_bar2 = st.columns(2)
-    with col_bar1:
-        st.markdown(f"<h4>Top Departamentos ({ilicito_elegido.split()[0]})</h4>", unsafe_allow_html=True)
-        df_dept_sorted = df[df[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
-        fig_dept = px.bar(
-            df_dept_sorted, x=ilicito_elegido, y="Departamento", orientation='h',
-            text=ilicito_elegido,
-            color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
-        )
-        fig_dept.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=10)
-        # Altura ultracompacta
-        fig_dept.update_layout(height=450, margin={"l": 90, "r": 30, "t": 0, "b": 0}, xaxis_title=None, yaxis_title=None)
-        st.plotly_chart(fig_dept, use_container_width=True)
-        
-    with col_bar2:
-        st.markdown(f"<h4>Promedios de Zonas FND</h4>", unsafe_allow_html=True)
-        df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
-        fig_zona_bar = px.bar(
-            df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
-            text=ilicito_elegido,
-            color="Zona", color_discrete_map=colores_invamer
-        )
-        fig_zona_bar.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=11)
-        fig_zona_bar.update_layout(height=220, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None)
-        st.plotly_chart(fig_zona_bar, use_container_width=True)
-
-        st.markdown(f"<h4>Mapa de Calor</h4>", unsafe_allow_html=True)
+    # Dividimos la pantalla en dos mitades
+    col_mapa, col_cuadros = st.columns([1, 1])
+    
+    with col_mapa:
+        st.markdown(f"<h4>Mapa de Calor ({ilicito_elegido.split()[0]})</h4>", unsafe_allow_html=True)
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
         elif "Contra" in ilicito_elegido:
@@ -277,8 +249,37 @@ with pag2:
             hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.1f'}
         )
         fig_heat.update_geos(visible=False, fitbounds="locations")
-        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=220, coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=10))
+        # Altura de 600px para que domine todo el lado izquierdo
+        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=12))
         st.plotly_chart(fig_heat, use_container_width=True)
+
+    with col_cuadros:
+        # CUADRO SUPERIOR: Tabla con Scroll para Departamentos
+        st.markdown(f"<h4>Ranking de Departamentos</h4>", unsafe_allow_html=True)
+        
+        # Preparamos los datos ordenados
+        df_dept_sorted = df[df[ilicito_elegido].notna()][["Departamento", ilicito_elegido]].sort_values(by=ilicito_elegido, ascending=False)
+        df_dept_sorted.reset_index(drop=True, inplace=True)
+        df_dept_sorted.index += 1 # Para que el ranking empiece en 1
+        
+        # Mostramos el dataframe nativo con altura limitada para activar el scroll interno
+        st.dataframe(
+            df_dept_sorted.style.format({ilicito_elegido: "{:.2f}%"}),
+            use_container_width=True,
+            height=320 
+        )
+        
+        # CUADRO INFERIOR: Barras para Zonas FND
+        st.markdown(f"<h4>Promedios de Zonas FND</h4>", unsafe_allow_html=True)
+        df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
+        fig_zona_bar = px.bar(
+            df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
+            text=ilicito_elegido,
+            color="Zona", color_discrete_map=colores_invamer
+        )
+        fig_zona_bar.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=11)
+        fig_zona_bar.update_layout(height=230, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None)
+        st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
 # PÁGINA 3: COMPARATIVA
