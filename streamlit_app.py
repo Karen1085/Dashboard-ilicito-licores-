@@ -86,11 +86,10 @@ coords_dptos = {
 def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
     
-    # Limpiar espacios ocultos en los nombres de las columnas y departamentos
+    # Limpiar espacios ocultos en los nombres
     df.columns = df.columns.str.strip() 
     df["Departamento"] = df["Departamento"].astype(str).str.strip() 
     
-    # --- MODIFICACIÓN EXACTA DEL NOMBRE ---
     # Homologar nombres de departamentos problemáticos
     df["Departamento"] = df["Departamento"].replace({
         "Norte de Santander": "Nte. Santander", 
@@ -98,11 +97,7 @@ def load_data():
         "Archipiélago de San Andrés, Providencia y Santa Catalina": "San Andrés"
     })
     
-    # Rellenar celdas vacías con 0 (Para evitar errores si no hay datos de Contrabando en San Andrés)
-    df["Adulteración"] = df["Adulteración"].fillna(0)
-    df["Contrabando"] = df["Contrabando"].fillna(0)
-    df["Falsificación"] = df["Falsificación"].fillna(0)
-    
+    # Dejamos las celdas vacías como NaN para que no afecten el promedio
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
     df["Falsificación (%)"] = df["Falsificación"] * 100 
@@ -140,6 +135,7 @@ zona_seleccionada = st.sidebar.selectbox(
 )
 
 # 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
+# Al usar .mean(), Pandas ignora automáticamente los valores nulos (NaN)
 df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
 if zona_seleccionada != "Todas las Zonas":
@@ -147,7 +143,6 @@ if zona_seleccionada != "Todas las Zonas":
     df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
     df_zona["Numero"] = range(1, len(df_zona) + 1)
     
-    # Usar None en lugar de 0 para evitar que Plotly aleje el mapa si no encuentra la coordenada
     df_zona["lat"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lat", None))
     df_zona["lon"] = df_zona["Departamento"].apply(lambda x: coords_dptos.get(x, {}).get("lon", None))
 else:
@@ -209,10 +204,12 @@ with col2:
         
         for i, row in df_zona.iterrows():
             depto_nombre = row["Departamento"]
-            adul_val = row["Adulteración (%)"]
-            contra_val = row["Contrabando (%)"]
-            falsi_val = row["Falsificación (%)"]
             num = row["Numero"]
+            
+            # --- PROTECCIÓN PARA MOSTRAR "N/A" SI EL DATO ESTÁ VACÍO ---
+            adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
+            contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
+            falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
             
             with cajitas_cols[i % 2]:
                 st.markdown(f"""
@@ -230,15 +227,15 @@ with col2:
                     </h4>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <span style="color: #6B7280; font-size: 13px;">Adulteración:</span>
-                        <span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_val:.2f}%</span>
+                        <span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_text}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <span style="color: #6B7280; font-size: 13px;">Contrabando:</span>
-                        <span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_val:.2f}%</span>
+                        <span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_text}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: #6B7280; font-size: 13px;">Falsificación:</span>
-                        <span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_val:.2f}%</span>
+                        <span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_text}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -264,7 +261,12 @@ with col2:
             falsi = row["Falsificación (%)"] 
             color_zona = colores_invamer.get(zona, "#000000")
             
-            html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul:.2f}%</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra:.2f}%</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi:.2f}%</td></tr>"
+            # Formateamos protegiendo en caso de que alguna zona completa estuviera sin datos (aunque no es el caso actual)
+            adul_text = f"{adul:.2f}%" if pd.notna(adul) else "N/A"
+            contra_text = f"{contra:.2f}%" if pd.notna(contra) else "N/A"
+            falsi_text = f"{falsi:.2f}%" if pd.notna(falsi) else "N/A"
+            
+            html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
             
         html_table += "</tbody></table>"
         st.markdown(html_table, unsafe_allow_html=True)
@@ -274,4 +276,4 @@ st.markdown("### Base de Datos General")
 st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona", "Numero", "lat", "lon"], errors='ignore').style.format({
     "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Falsificación": "{:.2%}",
     "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%", "Falsificación (%)": "{:.2f}%"
-}), use_container_width=True)
+}, na_rep="N/A"), use_container_width=True) # <-- Añadimos na_rep="N/A" para que la tabla final también se vea limpia
