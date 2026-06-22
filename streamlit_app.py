@@ -11,12 +11,16 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT ---
+# --- REDUCCIÓN DE ESPACIOS Y OCULTAMIENTO DE ELEMENTOS ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             .viewerBadge_container__1QSob {display: none !important;}
+            /* 1. Reduce el espacio blanco gigante de la parte superior e inferior */
+            .block-container {padding-top: 2rem !important; padding-bottom: 1rem !important;}
+            /* 2. Reduce el espacio entre los tabs y el contenido */
+            .stTabs [data-baseweb="tab-list"] {margin-bottom: 0px;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -115,8 +119,8 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
-# --- TÍTULO PRINCIPAL ---
-st.title("Comercio Ilícito de Licores FND-Datexco 2025")
+# --- TÍTULO PRINCIPAL (Convertido a Markdown para reducir margen inferior) ---
+st.markdown("<h1 style='margin-bottom: 0px; padding-bottom: 10px;'>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
 
 # --- CREACIÓN DE PESTAÑAS ---
 pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
@@ -125,10 +129,8 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 # PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
 # ==============================================================================
 with pag1:
-    st.markdown("<br>", unsafe_allow_html=True)
-    
     # --- FILTRO ALINEADO A LA IZQUIERDA ---
-    col_filtro1, _ = st.columns([1, 2]) # 1/3 de pantalla para el filtro, 2/3 vacíos
+    col_filtro1, _ = st.columns([1, 2]) 
     with col_filtro1:
         zona_seleccionada = st.selectbox(
             "📍 Seleccione la Zona que desea visualizar en el mapa:",
@@ -162,7 +164,8 @@ with pag1:
         ))
 
     fig.update_geos(visible=False, fitbounds="locations")
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=600) 
+    # Reducción de la altura del mapa de 600 a 500 para optimizar espacio
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=500) 
 
     col1, col2 = st.columns([1.8, 1.2])
     with col1:
@@ -170,7 +173,8 @@ with pag1:
 
     with col2:
         if zona_seleccionada != "Todas las Zonas":
-            st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-bottom: 20px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
+            # Márgenes de los títulos reducidos
+            st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]}; margin-top: 0px; margin-bottom: 10px;'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
             cajitas_cols = st.columns(2)
             
@@ -181,18 +185,19 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 6px solid {color_borde}; border-radius: 6px; padding: 12px; margin-bottom: 15px; background-color: white; box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
-<h4 style="margin-top: 0; margin-bottom: 10px; color: #192055; font-family: sans-serif; font-size: 15px; display: flex; align-items: center;">
-<span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; margin-right: 8px; font-size: 13px;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span style="color: #6B7280; font-size: 13px;">Adulteración:</span><span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span style="color: #6B7280; font-size: 13px;">Contrabando:</span><span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #6B7280; font-size: 13px;">Falsificación:</span><span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_text}</span></div></div>"""
+                # Se ajustaron los paddings y margins internos de la tarjeta HTML para compactarla
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 6px solid {color_borde}; border-radius: 6px; padding: 10px; margin-bottom: 10px; background-color: white; box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
+<h4 style="margin-top: 0; margin-bottom: 8px; color: #192055; font-family: sans-serif; font-size: 14px; display: flex; align-items: center;">
+<span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-block; text-align: center; line-height: 20px; margin-right: 6px; font-size: 12px;">{num}</span>{depto_nombre}</h4>
+<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #6B7280; font-size: 12px;">Adulteración:</span><span style="color: #B91C1C; font-weight: bold; font-size: 12px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #6B7280; font-size: 12px;">Contrabando:</span><span style="color: #D97706; font-weight: bold; font-size: 12px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #6B7280; font-size: 12px;">Falsificación:</span><span style="color: #4B5563; font-weight: bold; font-size: 12px;">{falsi_text}</span></div></div>"""
                 with cajitas_cols[i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
-            st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios por Zonas</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #192055; margin-top: 0px; margin-bottom: 15px;'>Promedios por Zonas</h3>", unsafe_allow_html=True)
             st.info("💡 Usa el filtro superior para ver el detalle de los departamentos de cada zona.")
-            html_table = "<style>.styled-table { border-collapse: collapse; margin: 15px 0; font-size: 14px; font-family: sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px 8px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 14px 15px; }.styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }.styled-table tbody tr:hover { background-color: #f1f5f9; }</style>"
+            html_table = "<style>.styled-table { border-collapse: collapse; margin: 10px 0; font-size: 13px; font-family: sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px 8px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 10px 12px; }.styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }.styled-table tbody tr:hover { background-color: #f1f5f9; }</style>"
             html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
             for index, row in df_promedios.iterrows():
                 zona = row["Zona"]
@@ -200,17 +205,14 @@ with pag1:
                 adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
-                html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
+                html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
             html_table += "</tbody></table>"
             st.markdown(html_table, unsafe_allow_html=True)
 
 # ==============================================================================
-# PÁGINA 2: TOPS DE ILÍCITOS (CON MAPA DE CALOR Y PORCENTAJES)
+# PÁGINA 2: TOPS DE ILÍCITOS
 # ==============================================================================
 with pag2:
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # --- FILTRO ALINEADO A LA IZQUIERDA ---
     col_filtro2, _ = st.columns([1, 2])
     with col_filtro2:
         ilicito_elegido = st.selectbox(
@@ -220,32 +222,33 @@ with pag2:
     
     col_bar1, col_bar2 = st.columns(2)
     with col_bar1:
-        st.markdown(f"#### Top Departamentos ({ilicito_elegido.split()[0]})")
+        st.markdown(f"<h4 style='margin-bottom: 0px;'>Top Departamentos ({ilicito_elegido.split()[0]})</h4>", unsafe_allow_html=True)
         df_dept_sorted = df[df[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
         fig_dept = px.bar(
             df_dept_sorted, x=ilicito_elegido, y="Departamento", orientation='h',
-            text=ilicito_elegido, # --- AÑADE PORCENTAJES EN BARRAS ---
+            text=ilicito_elegido,
             labels={ilicito_elegido: "Porcentaje (%)"},
             color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
         )
         fig_dept.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-        fig_dept.update_layout(height=700, margin={"l": 150, "r": 60, "t": 20, "b": 40})
+        # Reducción de la altura a 600
+        fig_dept.update_layout(height=600, margin={"l": 120, "r": 60, "t": 10, "b": 20})
         st.plotly_chart(fig_dept, use_container_width=True)
         
     with col_bar2:
-        st.markdown(f"#### Promedios de Zonas FND")
+        st.markdown(f"<h4 style='margin-bottom: 0px;'>Promedios de Zonas FND</h4>", unsafe_allow_html=True)
         df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
         fig_zona_bar = px.bar(
             df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
-            text=ilicito_elegido, # --- AÑADE PORCENTAJES EN BARRAS ---
+            text=ilicito_elegido,
             labels={ilicito_elegido: "Promedio (%)"},
             color="Zona", color_discrete_map=colores_invamer
         )
         fig_zona_bar.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-        fig_zona_bar.update_layout(height=350, margin={"l": 100, "r": 60, "t": 20, "b": 40}, showlegend=False)
+        fig_zona_bar.update_layout(height=280, margin={"l": 80, "r": 60, "t": 10, "b": 20}, showlegend=False)
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
-        st.markdown(f"#### Mapa de Calor ({ilicito_elegido.split()[0]})")
+        st.markdown(f"<h4 style='margin-bottom: 0px;'>Mapa de Calor</h4>", unsafe_allow_html=True)
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
         elif "Contra" in ilicito_elegido:
@@ -259,16 +262,13 @@ with pag2:
             hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.2f'}
         )
         fig_heat.update_geos(visible=False, fitbounds="locations")
-        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=300)
+        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=250)
         st.plotly_chart(fig_heat, use_container_width=True)
 
 # ==============================================================================
-# PÁGINA 3: COMPARATIVA NATIVA Y LIMPIA
+# PÁGINA 3: COMPARATIVA NATIVA
 # ==============================================================================
 with pag3:
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # --- FILTRO ALINEADO A LA IZQUIERDA ---
     col_filtro3, _ = st.columns([1, 2])
     with col_filtro3:
         depto_seleccionado = st.selectbox(
