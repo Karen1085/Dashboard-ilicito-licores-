@@ -90,12 +90,18 @@ def load_data():
     df.columns = df.columns.str.strip() 
     df["Departamento"] = df["Departamento"].astype(str).str.strip() 
     
+    # --- MODIFICACIÓN EXACTA DEL NOMBRE ---
     # Homologar nombres de departamentos problemáticos
     df["Departamento"] = df["Departamento"].replace({
         "Norte de Santander": "Nte. Santander", 
         "Bogotá": "Bogotá D.C.",
-        "San Andrés y Providencia": "San Andrés"
+        "Archipiélago de San Andrés, Providencia y Santa Catalina": "San Andrés"
     })
+    
+    # Rellenar celdas vacías con 0 (Para evitar errores si no hay datos de Contrabando en San Andrés)
+    df["Adulteración"] = df["Adulteración"].fillna(0)
+    df["Contrabando"] = df["Contrabando"].fillna(0)
+    df["Falsificación"] = df["Falsificación"].fillna(0)
     
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
