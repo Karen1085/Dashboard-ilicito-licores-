@@ -198,4 +198,4 @@ with pag1:
         fig.add_trace(go.Scattergeo(
             lon=df_zona["lon"], lat=df_zona["lat"], text=df_zona["Numero"].astype(str),
             mode="markers+text", textfont=dict(color="white", size=11, family="sans-serif", weight="bold"),
-            marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1
+            marker=dict(size=18, color="#000000", opacity=0.8, line=dict(width=1)
