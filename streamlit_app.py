@@ -127,11 +127,13 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 with pag1:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # --- NUEVO FILTRO INTEGRADO EN LA PESTAÑA 1 ---
-    zona_seleccionada = st.selectbox(
-        "📍 Seleccione la Zona que desea visualizar en el mapa:",
-        ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
-    )
+    # --- FILTRO ALINEADO A LA IZQUIERDA ---
+    col_filtro1, _ = st.columns([1, 2]) # 1/3 de pantalla para el filtro, 2/3 vacíos
+    with col_filtro1:
+        zona_seleccionada = st.selectbox(
+            "📍 Seleccione la Zona que desea visualizar en el mapa:",
+            ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
+        )
     
     df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
@@ -203,14 +205,18 @@ with pag1:
             st.markdown(html_table, unsafe_allow_html=True)
 
 # ==============================================================================
-# PÁGINA 2: TOPS DE ILÍCITOS (CON MAPA DE CALOR)
+# PÁGINA 2: TOPS DE ILÍCITOS (CON MAPA DE CALOR Y PORCENTAJES)
 # ==============================================================================
 with pag2:
     st.markdown("<br>", unsafe_allow_html=True)
-    ilicito_elegido = st.selectbox(
-        "📊 Seleccione la métrica que desea organizar:",
-        ["Falsificación (%)", "Contrabando (%)", "Adulteración (%)"]
-    )
+    
+    # --- FILTRO ALINEADO A LA IZQUIERDA ---
+    col_filtro2, _ = st.columns([1, 2])
+    with col_filtro2:
+        ilicito_elegido = st.selectbox(
+            "📊 Seleccione la métrica que desea organizar:",
+            ["Falsificación (%)", "Contrabando (%)", "Adulteración (%)"]
+        )
     
     col_bar1, col_bar2 = st.columns(2)
     with col_bar1:
@@ -218,10 +224,12 @@ with pag2:
         df_dept_sorted = df[df[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
         fig_dept = px.bar(
             df_dept_sorted, x=ilicito_elegido, y="Departamento", orientation='h',
+            text=ilicito_elegido, # --- AÑADE PORCENTAJES EN BARRAS ---
             labels={ilicito_elegido: "Porcentaje (%)"},
             color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
         )
-        fig_dept.update_layout(height=700, margin={"l": 150, "r": 20, "t": 20, "b": 40})
+        fig_dept.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+        fig_dept.update_layout(height=700, margin={"l": 150, "r": 60, "t": 20, "b": 40})
         st.plotly_chart(fig_dept, use_container_width=True)
         
     with col_bar2:
@@ -229,15 +237,15 @@ with pag2:
         df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
         fig_zona_bar = px.bar(
             df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
+            text=ilicito_elegido, # --- AÑADE PORCENTAJES EN BARRAS ---
             labels={ilicito_elegido: "Promedio (%)"},
             color="Zona", color_discrete_map=colores_invamer
         )
-        fig_zona_bar.update_layout(height=350, margin={"l": 100, "r": 20, "t": 20, "b": 40}, showlegend=False)
+        fig_zona_bar.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+        fig_zona_bar.update_layout(height=350, margin={"l": 100, "r": 60, "t": 20, "b": 40}, showlegend=False)
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
-        # --- TERCERA IMAGEN: MAPA DE CALOR ---
         st.markdown(f"#### Mapa de Calor ({ilicito_elegido.split()[0]})")
-        
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
         elif "Contra" in ilicito_elegido:
@@ -247,9 +255,7 @@ with pag2:
             
         fig_heat = px.choropleth(
             df, geojson=colombia_geojson, featureidkey="properties.NOMBRE_DPT", locations="DPT_GEOJSON",
-            color=ilicito_elegido, 
-            color_continuous_scale=escala_calor, 
-            hover_name="Departamento",
+            color=ilicito_elegido, color_continuous_scale=escala_calor, hover_name="Departamento",
             hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.2f'}
         )
         fig_heat.update_geos(visible=False, fitbounds="locations")
@@ -262,10 +268,13 @@ with pag2:
 with pag3:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    depto_seleccionado = st.selectbox(
-        "📍 Seleccione el Departamento que desea evaluar:",
-        sorted(df["Departamento"].unique())
-    )
+    # --- FILTRO ALINEADO A LA IZQUIERDA ---
+    col_filtro3, _ = st.columns([1, 2])
+    with col_filtro3:
+        depto_seleccionado = st.selectbox(
+            "📍 Seleccione el Departamento que desea evaluar:",
+            sorted(df["Departamento"].unique())
+        )
     
     fila_depto = df[df["Departamento"] == depto_seleccionado].iloc[0]
     zona_del_depto = fila_depto["Zona"]
