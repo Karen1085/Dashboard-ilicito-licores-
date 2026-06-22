@@ -11,24 +11,26 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# --- CSS AGRESIVO PARA DISEÑO PREMIUM Y OCULTAR "MANAGE APP" ---
+# --- CSS AGRESIVO PARA DISEÑO PREMIUM ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;} 
             
-            /* Ocultar botón Manage App y Toolbar de Streamlit Cloud */
+            /* Ocultar elementos inyectados por Streamlit Cloud */
             .stDeployButton {display: none !important;}
             [data-testid="stToolbar"] {display: none !important;}
+            [data-testid="manage-app-button"] {display: none !important;}
             .viewerBadge_container__1QSob {display: none !important;}
+            #stDecoration {display: none !important;}
             
             /* Ajuste de márgenes del lienzo */
             .block-container {
-                padding-top: 1.5rem !important; /* Ligero respiro para no cortar letras */
+                padding-top: 1.5rem !important; 
                 padding-bottom: 0rem !important; 
-                padding-left: 3rem !important;
-                padding-right: 3rem !important;
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
                 max-width: 100% !important;
             }
             
@@ -137,7 +139,6 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
-# Variable para los títulos de los widgets
 widget_title_style = "font-size: 13px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;"
 
 # --- TÍTULO PRINCIPAL ---
@@ -150,7 +151,7 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 # PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
 # ==============================================================================
 with pag1:
-    col_filtro1, _ = st.columns([1, 3]) 
+    col_filtro1, _ = st.columns([1, 4]) 
     with col_filtro1:
         zona_seleccionada = st.selectbox(
             "📍 Seleccione la Zona:",
@@ -187,15 +188,18 @@ with pag1:
     fig.update_geos(visible=False, fitbounds="locations")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
-    col1, col2 = st.columns([1.5, 1.5]) 
-    with col1:
+    # --- CAMBIO DE PROPORCIÓN: 3 Columnas para las tarjetas para evitar Scroll en Zona 4 ---
+    col_mapa, col_datos = st.columns([1.1, 1.9]) 
+    with col_mapa:
         st.plotly_chart(fig, use_container_width=True)
 
-    with col2:
+    with col_datos:
         if zona_seleccionada != "Todas las Zonas":
-            st.markdown(f"<div style='{widget_title_style} margin-top: 15px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
-            cajitas_cols = st.columns(2)
+            
+            # --- TRES COLUMNAS EN LUGAR DE DOS ---
+            cajitas_cols = st.columns(3)
             
             for i, row in df_zona.iterrows():
                 depto_nombre = row["Departamento"]
@@ -204,16 +208,17 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid {color_borde}; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 4px rgba(0,0,0,0.05);">
-<h4 style="margin: 0 0 4px 0; color: #1e293b; font-family: sans-serif; font-size: 13px; display: flex; align-items: center;">
-<span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 16px; height: 16px; display: inline-block; text-align: center; line-height: 16px; margin-right: 4px; font-size: 10px;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 11px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 11px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 11px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 11px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 11px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 11px;">{falsi_text}</span></div></div>"""
-                with cajitas_cols[i % 2]:
+                # Tarjetas más compactas
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 3px solid {color_borde}; border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);">
+<h4 style="margin: 0 0 4px 0; color: #1e293b; font-family: sans-serif; font-size: 12px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 16px; height: 16px; display: inline-block; text-align: center; line-height: 16px; margin-right: 4px; font-size: 9px;">{num}</span>{depto_nombre}</h4>
+<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 10px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 10px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 10px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 10px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 10px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 10px;">{falsi_text}</span></div></div>"""
+                with cajitas_cols[i % 3]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
-            st.markdown(f"<div style='{widget_title_style} margin-top: 15px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
             html_table = "<style>.styled-table { border-collapse: collapse; margin: 0; font-size: 12px; font-family: sans-serif; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 6px 6px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9;}.styled-table tbody tr { background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }</style>"
             html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
             for index, row in df_promedios.iterrows():
@@ -227,10 +232,10 @@ with pag1:
             st.markdown(html_table, unsafe_allow_html=True)
 
 # ==============================================================================
-# PÁGINA 2: NUEVO DISEÑO DE TOPS Y MAPA DE CALOR
+# PÁGINA 2: TOPS DE ILÍCITOS 
 # ==============================================================================
 with pag2:
-    col_filtro2, _ = st.columns([1, 3])
+    col_filtro2, _ = st.columns([1, 4])
     with col_filtro2:
         ilicito_elegido = st.selectbox(
             "📊 Métrica:",
@@ -283,10 +288,10 @@ with pag2:
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
-# PÁGINA 3: COMPARATIVA
+# PÁGINA 3: COMPARATIVA INTELIGENTE (SIN REPETICIONES)
 # ==============================================================================
 with pag3:
-    col_filtro3, _ = st.columns([1, 3])
+    col_filtro3, _ = st.columns([1, 4])
     with col_filtro3:
         depto_seleccionado = st.selectbox(
             "📍 Departamento:",
@@ -299,30 +304,45 @@ with pag3:
     promedios_nacionales = df[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean()
     promedios_zona = df_promedios[df_promedios["Zona"] == zona_del_depto].iloc[0]
     
-    st.markdown(f"<div style='{widget_title_style} margin-top: 20px; font-size: 16px;'>Análisis de {depto_seleccionado} ({zona_del_depto})</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='{widget_title_style} margin-top: 15px; font-size: 15px;'>Ficha Técnica: {depto_seleccionado} ({zona_del_depto})</div>", unsafe_allow_html=True)
     
-    st.markdown(f"<div style='{widget_title_style} color: #1e293b; margin-top: 15px;'>1. Comparativa vs. la Región ({zona_del_depto})</div>", unsafe_allow_html=True)
+    # --- REDISEÑO: UNA SOLA FILA CON 3 TARJETAS COMPLETAS ---
     col1, col2, col3 = st.columns(3)
     metricas = [("Adulteración (%)", col1), ("Contrabando (%)", col2), ("Falsificación (%)", col3)]
+    
     for met, col in metricas:
         v_depto = fila_depto[met]
         v_zona = promedios_zona[met]
-        with col:
-            if pd.notna(v_depto) and pd.notna(v_zona):
-                delta = v_depto - v_zona
-                st.metric(label=met.replace(" (%)", ""), value=f"{v_depto:.2f}%", delta=f"{delta:+.2f}% vs Región", delta_color="inverse")
-            else:
-                st.metric(label=met.replace(" (%)", ""), value="N/A", delta="Sin datos")
-
-    st.markdown(f"<div style='{widget_title_style} color: #1e293b; margin-top: 20px;'>2. Comparativa vs. Promedio Nacional</div>", unsafe_allow_html=True)
-    col4, col5, col6 = st.columns(3)
-    metricas_nac = [("Adulteración (%)", col4), ("Contrabando (%)", col5), ("Falsificación (%)", col6)]
-    for met, col in metricas_nac:
-        v_depto = fila_depto[met]
         v_nac = promedios_nacionales[met]
+        nombre_metrica = met.replace(" (%)", "")
+        
         with col:
-            if pd.notna(v_depto) and pd.notna(v_nac):
+            if pd.notna(v_depto):
+                # Calcular deltas matemáticos
+                delta_zona = v_depto - v_zona
                 delta_nac = v_depto - v_nac
-                st.metric(label=met.replace(" (%)", ""), value=f"{v_depto:.2f}%", delta=f"{delta_nac:+.2f}% vs Nacional", delta_color="inverse")
+                
+                # Asignar colores lógicos (Rojo si es mayor/peor, Verde si es menor/mejor)
+                color_d_zona = "#b91c1c" if delta_zona > 0 else "#15803d"
+                color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
+                
+                html_card = f"""
+                <div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
+                    <h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
+                    
+                    <div style="background-color: #f8fafc; padding: 10px; border-radius: 6px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                            <span style="color: #475569;">Promedio {zona_del_depto}: <strong style="color:#0f172a;">{v_zona:.2f}%</strong></span>
+                            <span style="font-weight: bold; color: {color_d_zona};">{delta_zona:+.2f}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #475569;">Promedio Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
+                            <span style="font-weight: bold; color: {color_d_nac};">{delta_nac:+.2f}%</span>
+                        </div>
+                    </div>
+                </div>
+                """
+                st.markdown(html_card, unsafe_allow_html=True)
             else:
-                st.metric(label=met.replace(" (%)", ""), value="N/A", delta="Sin datos")
+                st.info(f"Sin datos registrados para {nombre_metrica}.")
