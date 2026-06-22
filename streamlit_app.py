@@ -7,7 +7,8 @@ import requests
 # 1. Configuración de la página
 st.set_page_config(
     page_title="Dashboard Comercio Ilícito de Licores FND-Datexco", 
-    layout="wide"
+    layout="wide", 
+    page_icon="📊"
 )
 
 # --- CSS AGRESIVO PARA DISEÑO PREMIUM Y OCULTAR MARCAS DE AGUA ---
@@ -17,15 +18,22 @@ hide_st_style = """
             footer {visibility: hidden;}
             header {visibility: hidden;} 
             
-            /* Ocultar elementos inyectados por Streamlit Cloud (Botones, Avatar, Coronas) */
+            /* Ocultar elementos de Streamlit Cloud (Botones) */
             .stDeployButton {display: none !important;}
             [data-testid="stToolbar"] {display: none !important;}
             [data-testid="manage-app-button"] {display: none !important;}
+            #stDecoration {display: none !important;}
+            
+            /* ESCUDO ANTI-MARCA DE AGUA (Creator Badge) */
             [class*="viewerBadge"] {display: none !important;}
             [class*="CreatorBadge"] {display: none !important;}
             [class*="creatorBadge"] {display: none !important;}
+            [class^="styles_viewerBadge"] {display: none !important;}
+            [class^="styles_creatorBadge"] {display: none !important;}
+            [id^="viewerBadge"] {display: none !important;}
+            /* Atacar directamente los enlaces de Streamlit anclados */
             a[href*="streamlit.io/cloud"] {display: none !important;}
-            #stDecoration {display: none !important;}
+            a[target="_blank"][href*="streamlit"] {display: none !important;}
             
             /* Ajuste de márgenes del lienzo */
             .block-container {
@@ -153,7 +161,7 @@ widget_title_style = "font-size: 12px; color: #64748B; font-weight: 700; text-tr
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
 
-# --- CREACIÓN DE PESTAÑAS (SIN EMOJIS) ---
+# --- CREACIÓN DE PESTAÑAS ---
 pag1, pag2, pag3 = st.tabs(["Mapa y Zonas", "Ranking y Promedios", "Análisis Departamental"])
 
 # ==============================================================================
