@@ -89,6 +89,7 @@ def load_data():
     df = pd.read_excel("Base_Datos_Licores_Zonas.xlsx")
     df["Adulteración (%)"] = df["Adulteración"] * 100
     df["Contrabando (%)"] = df["Contrabando"] * 100
+    df["Falsificación (%)"] = df["Falsificación"] * 100 # --- NUEVA COLUMNA AÑADIDA ---
     
     mapeo_nombres = {
         "Antioquia": "ANTIOQUIA", "Atlántico": "ATLANTICO", "Bogotá D.C.": "SANTAFE DE BOGOTA D.C",
@@ -123,7 +124,8 @@ zona_seleccionada = st.sidebar.selectbox(
 )
 
 # 7. LÓGICA DE FILTRADO Y ENUMERACIÓN
-df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)"]].mean().reset_index()
+# --- SE AÑADIÓ FALSIFICACIÓN AL GRUPO DE PROMEDIOS ---
+df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
 if zona_seleccionada != "Todas las Zonas":
     df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
@@ -144,7 +146,8 @@ fig = px.choropleth(
     color="Visual_Zona",
     color_discrete_map=colores_invamer,
     hover_name="Departamento",
-    hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f'}
+    # --- SE AÑADIÓ FALSIFICACIÓN AL HOVER DEL MAPA ---
+    hover_data={"DPT_GEOJSON": False, "Visual_Zona": False, "Zona": True, "Adulteración (%)": ':.2f', "Contrabando (%)": ':.2f', "Falsificación (%)": ':.2f'}
 )
 
 # 9. AGREGAR LOS PINES NUMÉRICOS AL MAPA
@@ -192,6 +195,7 @@ with col2:
             depto_nombre = row["Departamento"]
             adul_val = row["Adulteración (%)"]
             contra_val = row["Contrabando (%)"]
+            falsi_val = row["Falsificación (%)"] # --- VARIABLE AÑADIDA ---
             num = row["Numero"]
             
             with cajitas_cols[i % 2]:
@@ -212,9 +216,13 @@ with col2:
                         <span style="color: #6B7280; font-size: 13px;">Adulteración:</span>
                         <span style="color: #B91C1C; font-weight: bold; font-size: 13px;">{adul_val:.2f}%</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <span style="color: #6B7280; font-size: 13px;">Contrabando:</span>
                         <span style="color: #D97706; font-weight: bold; font-size: 13px;">{contra_val:.2f}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #6B7280; font-size: 13px;">Falsificación:</span>
+                        <span style="color: #4B5563; font-weight: bold; font-size: 13px;">{falsi_val:.2f}%</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -231,20 +239,26 @@ with col2:
         html_table += ".styled-table tbody tr:hover { background-color: #f1f5f9; }"
         html_table += "</style>"
         html_table += "<table class='styled-table'>"
-        html_table += "<thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th></tr></thead><tbody>"
+        # --- SE AÑADIÓ LA COLUMNA AL ENCABEZADO DE LA TABLA ---
+        html_table += "<thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
         
         for index, row in df_promedios.iterrows():
             zona = row["Zona"]
             adul = row["Adulteración (%)"]
             contra = row["Contrabando (%)"]
+            falsi = row["Falsificación (%)"] # --- VARIABLE AÑADIDA ---
             color_zona = colores_invamer.get(zona, "#000000")
-            html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul:.2f}%</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra:.2f}%</td></tr>"
+            
+            # --- SE AÑADIÓ LA CELDA DE FALSIFICACIÓN A LA TABLA ---
+            html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul:.2f}%</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra:.2f}%</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi:.2f}%</td></tr>"
             
         html_table += "</tbody></table>"
         st.markdown(html_table, unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("### Base de Datos General")
+# --- SE AÑADIÓ FALSIFICACIÓN AL FORMATEO DEL DATAFRAME FINAL ---
 st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona", "Numero", "lat", "lon"], errors='ignore').style.format({
-    "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%"
+    "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Falsificación": "{:.2%}",
+    "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%", "Falsificación (%)": "{:.2f}%"
 }), use_container_width=True)
