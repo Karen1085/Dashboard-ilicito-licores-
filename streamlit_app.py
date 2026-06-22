@@ -139,7 +139,7 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
-widget_title_style = "font-size: 13px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;"
+widget_title_style = "font-size: 12px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;"
 
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
@@ -148,7 +148,7 @@ st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_all
 pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
 
 # ==============================================================================
-# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL (CON SCROLL INTERNO)
+# PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL (TARJETAS ULTRA COMPACTAS)
 # ==============================================================================
 with pag1:
     col_filtro1, _ = st.columns([1, 4]) 
@@ -188,7 +188,7 @@ with pag1:
     fig.update_geos(visible=False, fitbounds="locations")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
-    # --- VOLVEMOS A 2 COLUMNAS GENERALES PARA QUE EL MAPA TENGA ESPACIO ---
+    # Proporción de la pantalla: mapa izquierda, 2 columnas puras a la derecha
     col_mapa, col_datos = st.columns([1.1, 1.9]) 
     with col_mapa:
         st.plotly_chart(fig, use_container_width=True)
@@ -198,9 +198,8 @@ with pag1:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
             
-            # --- LA SOLUCIÓN: UN CONTENEDOR CON SCROLL DE 400px DE ALTO ---
-            cont_scroll = st.container(height=400)
-            cajitas_cols = cont_scroll.columns(2)
+            # --- CREAMOS 2 COLUMNAS PURAS SIN CONTENEDORES CON SCROLL ---
+            cajitas_cols = st.columns(2)
             
             for i, row in df_zona.iterrows():
                 depto_nombre = row["Departamento"]
@@ -209,12 +208,18 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid {color_borde}; border-radius: 4px; padding: 10px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 4px rgba(0,0,0,0.05);">
-<h4 style="margin: 0 0 8px 0; color: #1e293b; font-family: sans-serif; font-size: 14px; display: flex; align-items: center;">
-<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; margin-right: 6px; font-size: 10px;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #64748b; font-size: 12px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 12px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 2px;"><span style="color: #64748b; font-size: 12px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 12px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 12px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 12px;">{falsi_text}</span></div></div>"""
+                # Tarjeta ultra-compacta: borde a la izquierda en vez de arriba, márgenes de 4px
+                html_card = f"""
+                <div style="border: 1px solid #E5E7EB; border-left: 4px solid {color_borde}; border-radius: 4px; padding: 4px 10px; margin-bottom: 6px; background-color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);">
+                    <div style="display: flex; align-items: center; margin-bottom: 2px;">
+                        <span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 14px; height: 14px; display: inline-block; text-align: center; line-height: 14px; margin-right: 6px; font-size: 9px; font-weight: bold;">{num}</span>
+                        <span style="color: #1e293b; font-family: sans-serif; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{depto_nombre}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 11px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 11px;">{adul_text}</span></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 11px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 11px;">{contra_text}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 11px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 11px;">{falsi_text}</span></div>
+                </div>
+                """
                 with cajitas_cols[i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
@@ -288,7 +293,7 @@ with pag2:
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
-# PÁGINA 3: COMPARATIVA INTELIGENTE (HTML REPARADO)
+# PÁGINA 3: COMPARATIVA INTELIGENTE (HTML REPARADO ALINEADO A LA IZQUIERDA)
 # ==============================================================================
 with pag3:
     col_filtro3, _ = st.columns([1, 4])
@@ -323,7 +328,7 @@ with pag3:
                 color_d_zona = "#b91c1c" if delta_zona > 0 else "#15803d"
                 color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
                 
-                # HTML PEGADO TOTALMENTE A LA IZQUIERDA PARA QUE STREAMLIT NO LO DAÑE
+                # HTML TOTALMENTE SIN SANGRÍA PARA EVITAR EL ERROR DE STREAMLIT
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
 <h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
 <h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
@@ -333,7 +338,7 @@ with pag3:
 <span style="font-weight: bold; color: {color_d_zona};">{delta_zona:+.2f}%</span>
 </div>
 <div style="display: flex; justify-content: space-between; font-size: 13px;">
-<span style="color: #475569;">Promedio Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
+<span style="color: #475569;">Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
 <span style="font-weight: bold; color: {color_d_nac};">{delta_nac:+.2f}%</span>
 </div>
 </div>
