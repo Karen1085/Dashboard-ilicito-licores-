@@ -11,7 +11,7 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# --- CSS AGRESIVO PARA DISEÑO PREMIUM ---
+# --- CSS AGRESIVO PARA DISEÑO PREMIUM Y UNIFICACIÓN DE COLOR ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -37,7 +37,9 @@ hide_st_style = """
             .stTabs [data-baseweb="tab-list"] {margin-bottom: 0px;}
             .stTabs [data-baseweb="tab-panel"] {padding-top: 15px;}
             
-            h1 {margin-bottom: 0px !important; padding-bottom: 5px !important; color: #1e293b; font-size: 2.2rem !important; font-weight: 800;}
+            /* Unificamos el color de los títulos al Azul Institucional */
+            h1 {margin-bottom: 0px !important; padding-bottom: 5px !important; color: #192055; font-size: 2.2rem !important; font-weight: 800;}
+            h3, h4 {color: #192055 !important;}
             
             .stSelectbox {margin-bottom: 0px !important;}
             div[data-testid="stVerticalBlock"] {gap: 0.5rem !important;}
@@ -132,14 +134,15 @@ def load_data():
 
 df = load_data()
 
-# 5. Colores
+# 5. Colores unificados
 colores_invamer = {
     "Zona 1": "#8FBC8B", "Zona 2": "#E4B56C", "Zona 3": "#192055",
     "Zona 4": "#C9D8C5", "Zona 5": "#528797", "Zona 6": "#CBE0EE",
     "Otras Zonas": "#E5E7EB"
 }
 
-widget_title_style = "font-size: 12px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;"
+# Estilo de títulos con el azul institucional
+widget_title_style = "font-size: 13px; color: #192055; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;"
 
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
@@ -186,10 +189,8 @@ with pag1:
         ))
 
     fig.update_geos(visible=False, fitbounds="locations")
-    # Aumentamos la altura del mapa para que sea más imponente
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=500, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
-    # --- NUEVA PROPORCIÓN: El mapa (1.4) tiene mucho más espacio frente a las cajitas (1.6) ---
     col_mapa, col_datos = st.columns([1.4, 1.6]) 
     with col_mapa:
         st.plotly_chart(fig, use_container_width=True)
@@ -201,7 +202,6 @@ with pag1:
             
             cajitas_cols = st.columns(2)
             
-            # SOLUCIÓN DEL APILAMIENTO: Usamos enumerate para que se asigne exactamente 1 izquierda, 1 derecha.
             for seq_i, (index, row) in enumerate(df_zona.iterrows()):
                 depto_nombre = row["Departamento"]
                 num = row["Numero"]
@@ -209,20 +209,19 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                # Tarjeta miniatura: text-size muy compacto
-                html_card = f"""<div style="border: 1px solid #E5E7EB; border-left: 4px solid {color_borde}; border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; background-color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);">
-<h4 style="margin: 0 0 2px 0; color: #1e293b; font-family: sans-serif; font-size: 11px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 14px; height: 14px; display: inline-block; text-align: center; line-height: 14px; margin-right: 5px; font-size: 8px; font-weight: bold;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 10px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 10px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 0px;"><span style="color: #64748b; font-size: 10px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 10px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 10px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 10px;">{falsi_text}</span></div></div>"""
+                # --- LETRAS MÁS GRANDES (13px y 12px), MÁRGENES REDUCIDOS ---
+                html_card = f"""<div style="border: 1px solid #E5E7EB; border-left: 4px solid {color_borde}; border-radius: 4px; padding: 4px 10px; margin-bottom: 6px; background-color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);">
+<h4 style="margin: 0 0 2px 0; color: #192055; font-family: sans-serif; font-size: 13px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+<span style="background-color: {color_borde}; color: white; border-radius: 50%; min-width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; margin-right: 6px; font-size: 10px; font-weight: bold;">{num}</span>{depto_nombre}</h4>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0px; line-height: 1.2;"><span style="color: #64748b; font-size: 12px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 12px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0px; line-height: 1.2;"><span style="color: #64748b; font-size: 12px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 12px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between; line-height: 1.2;"><span style="color: #64748b; font-size: 12px;">Falsificación:</span><span style="color: #192055; font-weight: bold; font-size: 12px;">{falsi_text}</span></div></div>"""
                 
-                # seq_i es secuencial (0, 1, 2, 3...) asegurando un balance perfecto
                 with cajitas_cols[seq_i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
             st.markdown(f"<div style='{widget_title_style} margin-top: 5px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
-            html_table = "<style>.styled-table { border-collapse: collapse; margin: 0; font-size: 12px; font-family: sans-serif; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 6px 6px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9;}.styled-table tbody tr { background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }</style>"
+            html_table = "<style>.styled-table { border-collapse: collapse; margin: 0; font-size: 13px; font-family: sans-serif; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 6px 6px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9;}.styled-table tbody tr { background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }</style>"
             html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
             for index, row in df_promedios.iterrows():
                 zona = row["Zona"]
@@ -230,7 +229,8 @@ with pag1:
                 adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
-                html_table += f"<tr><td style='font-weight: bold; color: #1e293b; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; border: 1px solid #cbd5e1;'></span>{zona}</td><td style='text-align: right; color: #b91c1c; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #d97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #475569; font-weight: bold;'>{falsi_text}</td></tr>"
+                # Se unifica Falsificación al azul oscuro #192055
+                html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 1px solid #cbd5e1;'></span>{zona}</td><td style='text-align: right; color: #b91c1c; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #d97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #192055; font-weight: bold;'>{falsi_text}</td></tr>"
             html_table += "</tbody></table>"
             st.markdown(html_table, unsafe_allow_html=True)
 
@@ -256,7 +256,7 @@ with pag2:
         elif "Contra" in ilicito_elegido:
             escala_calor = "Oranges"
         else:
-            escala_calor = "Blues"
+            escala_calor = "Blues" # Azul para Falsificación
             
         fig_heat = px.choropleth(
             df, geojson=colombia_geojson, featureidkey="properties.NOMBRE_DPT", locations="DPT_GEOJSON",
@@ -281,10 +281,11 @@ with pag2:
         
         st.markdown(f"<div style='{widget_title_style} margin-top: 10px;'>📊 Promedios de Zonas FND</div>", unsafe_allow_html=True)
         df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
+        # Falsificación usa #192055 uniformemente
         fig_zona_bar = px.bar(
             df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
             text=ilicito_elegido,
-            color="Zona", color_discrete_map=colores_invamer
+            color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
         )
         fig_zona_bar.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=11)
         fig_zona_bar.update_layout(height=230, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
@@ -327,15 +328,15 @@ with pag3:
                 color_d_nac = "#b91c1c" if delta_nac > 0 else "#15803d"
                 
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid #192055; border-radius: 8px; padding: 18px; background-color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-<h4 style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
-<h2 style="margin: 5px 0 15px 0; color: #0f172a; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
+<h4 style="margin: 0; color: #192055; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{nombre_metrica}</h4>
+<h2 style="margin: 5px 0 15px 0; color: #192055; font-size: 32px; font-weight: 800;">{v_depto:.2f}%</h2>
 <div style="background-color: #f8fafc; padding: 10px; border-radius: 6px;">
 <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
-<span style="color: #475569;">Promedio {zona_del_depto}: <strong style="color:#0f172a;">{v_zona:.2f}%</strong></span>
+<span style="color: #475569;">Promedio {zona_del_depto}: <strong style="color:#192055;">{v_zona:.2f}%</strong></span>
 <span style="font-weight: bold; color: {color_d_zona};">{delta_zona:+.2f}%</span>
 </div>
 <div style="display: flex; justify-content: space-between; font-size: 13px;">
-<span style="color: #475569;">Nacional: <strong style="color:#0f172a;">{v_nac:.2f}%</strong></span>
+<span style="color: #475569;">Nacional: <strong style="color:#192055;">{v_nac:.2f}%</strong></span>
 <span style="font-weight: bold; color: {color_d_nac};">{delta_nac:+.2f}%</span>
 </div>
 </div>
