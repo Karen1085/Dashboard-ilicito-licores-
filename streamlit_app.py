@@ -11,27 +11,31 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# --- CSS AGRESIVO PARA ELIMINAR SCROLL Y MÁRGENES ---
+# --- CSS AGRESIVO PARA DISEÑO PREMIUM Y OCULTAR "MANAGE APP" ---
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;} 
+            
+            /* Ocultar botón Manage App y Toolbar de Streamlit Cloud */
+            .stDeployButton {display: none !important;}
+            [data-testid="stToolbar"] {display: none !important;}
             .viewerBadge_container__1QSob {display: none !important;}
             
+            /* Ajuste de márgenes del lienzo */
             .block-container {
-                padding-top: 1rem !important; 
+                padding-top: 1.5rem !important; /* Ligero respiro para no cortar letras */
                 padding-bottom: 0rem !important; 
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
+                padding-left: 3rem !important;
+                padding-right: 3rem !important;
                 max-width: 100% !important;
             }
             
             .stTabs [data-baseweb="tab-list"] {margin-bottom: 0px;}
-            .stTabs [data-baseweb="tab-panel"] {padding-top: 0px;}
+            .stTabs [data-baseweb="tab-panel"] {padding-top: 15px;}
             
-            h1 {margin-bottom: 0px !important; padding-bottom: 5px !important;}
-            h3, h4 {margin-bottom: 0px !important; padding-bottom: 2px !important; margin-top: 5px !important;}
+            h1 {margin-bottom: 0px !important; padding-bottom: 5px !important; color: #1e293b; font-size: 2.2rem !important; font-weight: 800;}
             
             .stSelectbox {margin-bottom: 0px !important;}
             div[data-testid="stVerticalBlock"] {gap: 0.5rem !important;}
@@ -133,6 +137,9 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
+# Variable para los títulos de los widgets
+widget_title_style = "font-size: 13px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;"
+
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
 
@@ -143,7 +150,7 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 # PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
 # ==============================================================================
 with pag1:
-    col_filtro1, _ = st.columns([1, 3])
+    col_filtro1, _ = st.columns([1, 3]) 
     with col_filtro1:
         zona_seleccionada = st.selectbox(
             "📍 Seleccione la Zona:",
@@ -178,7 +185,7 @@ with pag1:
         ))
 
     fig.update_geos(visible=False, fitbounds="locations")
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450) 
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, height=450, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)') 
 
     col1, col2 = st.columns([1.5, 1.5]) 
     with col1:
@@ -186,7 +193,7 @@ with pag1:
 
     with col2:
         if zona_seleccionada != "Todas las Zonas":
-            st.markdown(f"<h3 style='color: {colores_invamer[zona_seleccionada]};'>Detalle: {zona_seleccionada}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<div style='{widget_title_style} margin-top: 15px;'>Detalle interactivo: {zona_seleccionada}</div>", unsafe_allow_html=True)
             color_borde = colores_invamer[zona_seleccionada]
             cajitas_cols = st.columns(2)
             
@@ -198,16 +205,16 @@ with pag1:
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 4px solid {color_borde}; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; background-color: white; box-shadow: 1px 1px 4px rgba(0,0,0,0.05);">
-<h4 style="margin: 0 0 4px 0; color: #192055; font-family: sans-serif; font-size: 13px; display: flex; align-items: center;">
+<h4 style="margin: 0 0 4px 0; color: #1e293b; font-family: sans-serif; font-size: 13px; display: flex; align-items: center;">
 <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 16px; height: 16px; display: inline-block; text-align: center; line-height: 16px; margin-right: 4px; font-size: 10px;">{num}</span>{depto_nombre}</h4>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #6B7280; font-size: 11px;">Adulteración:</span><span style="color: #B91C1C; font-weight: bold; font-size: 11px;">{adul_text}</span></div>
-<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #6B7280; font-size: 11px;">Contrabando:</span><span style="color: #D97706; font-weight: bold; font-size: 11px;">{contra_text}</span></div>
-<div style="display: flex; justify-content: space-between;"><span style="color: #6B7280; font-size: 11px;">Falsificación:</span><span style="color: #4B5563; font-weight: bold; font-size: 11px;">{falsi_text}</span></div></div>"""
+<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 11px;">Adulteración:</span><span style="color: #b91c1c; font-weight: bold; font-size: 11px;">{adul_text}</span></div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 1px;"><span style="color: #64748b; font-size: 11px;">Contrabando:</span><span style="color: #d97706; font-weight: bold; font-size: 11px;">{contra_text}</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #64748b; font-size: 11px;">Falsificación:</span><span style="color: #475569; font-weight: bold; font-size: 11px;">{falsi_text}</span></div></div>"""
                 with cajitas_cols[i % 2]:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
-            st.markdown("<h3>Promedios por Zonas</h3>", unsafe_allow_html=True)
-            html_table = "<style>.styled-table { border-collapse: collapse; margin: 0; font-size: 12px; font-family: sans-serif; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 6px 6px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 6px 10px; }.styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }</style>"
+            st.markdown(f"<div style='{widget_title_style} margin-top: 15px;'>Promedios por Zonas FND</div>", unsafe_allow_html=True)
+            html_table = "<style>.styled-table { border-collapse: collapse; margin: 0; font-size: 12px; font-family: sans-serif; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 6px 6px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9;}.styled-table tbody tr { background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }</style>"
             html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
             for index, row in df_promedios.iterrows():
                 zona = row["Zona"]
@@ -215,7 +222,7 @@ with pag1:
                 adul_text = f"{row['Adulteración (%)']:.2f}%" if pd.notna(row['Adulteración (%)']) else "N/A"
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
-                html_table += f"<tr><td style='font-weight: bold; color: #192055; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; border: 1px solid #d1d5db;'></span>{zona}</td><td style='text-align: right; color: #B91C1C; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #D97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #4B5563; font-weight: bold;'>{falsi_text}</td></tr>"
+                html_table += f"<tr><td style='font-weight: bold; color: #1e293b; display: flex; align-items: center;'><span style='background-color: {color_zona}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; border: 1px solid #cbd5e1;'></span>{zona}</td><td style='text-align: right; color: #b91c1c; font-weight: bold;'>{adul_text}</td><td style='text-align: right; color: #d97706; font-weight: bold;'>{contra_text}</td><td style='text-align: right; color: #475569; font-weight: bold;'>{falsi_text}</td></tr>"
             html_table += "</tbody></table>"
             st.markdown(html_table, unsafe_allow_html=True)
 
@@ -231,11 +238,11 @@ with pag2:
             label_visibility="collapsed"
         )
     
-    # Dividimos la pantalla en dos mitades
-    col_mapa, col_cuadros = st.columns([1, 1])
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_mapa, col_cuadros = st.columns([1.1, 1])
     
     with col_mapa:
-        st.markdown(f"<h4>Mapa de Calor ({ilicito_elegido.split()[0]})</h4>", unsafe_allow_html=True)
+        st.markdown(f"<div style='{widget_title_style}'>🗺️ Mapa de Calor ({ilicito_elegido.split()[0]})</div>", unsafe_allow_html=True)
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
         elif "Contra" in ilicito_elegido:
@@ -249,28 +256,22 @@ with pag2:
             hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.1f'}
         )
         fig_heat.update_geos(visible=False, fitbounds="locations")
-        # Altura de 600px para que domine todo el lado izquierdo
-        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=600, coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=12))
+        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=500, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', coloraxis_colorbar=dict(title="", thicknessmode="pixels", thickness=12))
         st.plotly_chart(fig_heat, use_container_width=True)
 
     with col_cuadros:
-        # CUADRO SUPERIOR: Tabla con Scroll para Departamentos
-        st.markdown(f"<h4>Ranking de Departamentos</h4>", unsafe_allow_html=True)
-        
-        # Preparamos los datos ordenados
+        st.markdown(f"<div style='{widget_title_style}'>🏆 Ranking de Departamentos</div>", unsafe_allow_html=True)
         df_dept_sorted = df[df[ilicito_elegido].notna()][["Departamento", ilicito_elegido]].sort_values(by=ilicito_elegido, ascending=False)
         df_dept_sorted.reset_index(drop=True, inplace=True)
-        df_dept_sorted.index += 1 # Para que el ranking empiece en 1
+        df_dept_sorted.index += 1 
         
-        # Mostramos el dataframe nativo con altura limitada para activar el scroll interno
         st.dataframe(
             df_dept_sorted.style.format({ilicito_elegido: "{:.2f}%"}),
             use_container_width=True,
-            height=320 
+            height=280 
         )
         
-        # CUADRO INFERIOR: Barras para Zonas FND
-        st.markdown(f"<h4>Promedios de Zonas FND</h4>", unsafe_allow_html=True)
+        st.markdown(f"<div style='{widget_title_style} margin-top: 10px;'>📊 Promedios de Zonas FND</div>", unsafe_allow_html=True)
         df_zona_sorted = df_promedios[df_promedios[ilicito_elegido].notna()].sort_values(by=ilicito_elegido, ascending=True)
         fig_zona_bar = px.bar(
             df_zona_sorted, x=ilicito_elegido, y="Zona", orientation='h',
@@ -278,7 +279,7 @@ with pag2:
             color="Zona", color_discrete_map=colores_invamer
         )
         fig_zona_bar.update_traces(texttemplate='%{text:.1f}%', textposition='outside', textfont_size=11)
-        fig_zona_bar.update_layout(height=230, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None)
+        fig_zona_bar.update_layout(height=220, margin={"l": 60, "r": 30, "t": 0, "b": 0}, showlegend=False, xaxis_title=None, yaxis_title=None, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_zona_bar, use_container_width=True)
 
 # ==============================================================================
@@ -298,9 +299,9 @@ with pag3:
     promedios_nacionales = df[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean()
     promedios_zona = df_promedios[df_promedios["Zona"] == zona_del_depto].iloc[0]
     
-    st.markdown(f"<h3>Análisis de {depto_seleccionado} ({zona_del_depto})</h3>", unsafe_allow_html=True)
+    st.markdown(f"<div style='{widget_title_style} margin-top: 20px; font-size: 16px;'>Análisis de {depto_seleccionado} ({zona_del_depto})</div>", unsafe_allow_html=True)
     
-    st.markdown(f"<h4>1. Comparativa vs. la Región ({zona_del_depto})</h4>", unsafe_allow_html=True)
+    st.markdown(f"<div style='{widget_title_style} color: #1e293b; margin-top: 15px;'>1. Comparativa vs. la Región ({zona_del_depto})</div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     metricas = [("Adulteración (%)", col1), ("Contrabando (%)", col2), ("Falsificación (%)", col3)]
     for met, col in metricas:
@@ -313,7 +314,7 @@ with pag3:
             else:
                 st.metric(label=met.replace(" (%)", ""), value="N/A", delta="Sin datos")
 
-    st.markdown(f"<h4>2. Comparativa vs. Promedio Nacional</h4>", unsafe_allow_html=True)
+    st.markdown(f"<div style='{widget_title_style} color: #1e293b; margin-top: 20px;'>2. Comparativa vs. Promedio Nacional</div>", unsafe_allow_html=True)
     col4, col5, col6 = st.columns(3)
     metricas_nac = [("Adulteración (%)", col4), ("Contrabando (%)", col5), ("Falsificación (%)", col6)]
     for met, col in metricas_nac:
