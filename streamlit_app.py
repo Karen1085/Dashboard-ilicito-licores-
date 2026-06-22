@@ -179,7 +179,6 @@ with pag1:
                 contra_text = f"{row['Contrabando (%)']:.2f}%" if pd.notna(row['Contrabando (%)']) else "N/A"
                 falsi_text = f"{row['Falsificación (%)']:.2f}%" if pd.notna(row['Falsificación (%)']) else "N/A"
                 
-                # Se eliminó la indentación dentro del string para evitar el error de código Markdown
                 html_card = f"""<div style="border: 1px solid #E5E7EB; border-top: 6px solid {color_borde}; border-radius: 6px; padding: 12px; margin-bottom: 15px; background-color: white; box-shadow: 1px 2px 8px rgba(0,0,0,0.05);">
 <h4 style="margin-top: 0; margin-bottom: 10px; color: #192055; font-family: sans-serif; font-size: 15px; display: flex; align-items: center;">
 <span style="background-color: {color_borde}; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; margin-right: 8px; font-size: 13px;">{num}</span>{depto_nombre}</h4>
@@ -204,7 +203,7 @@ with pag1:
             st.markdown(html_table, unsafe_allow_html=True)
 
 # ==============================================================================
-# PÁGINA 2: TOPS DE ILÍCITOS
+# PÁGINA 2: TOPS DE ILÍCITOS (CON MAPA DE CALOR)
 # ==============================================================================
 with pag2:
     st.markdown("<br>", unsafe_allow_html=True)
@@ -222,7 +221,7 @@ with pag2:
             labels={ilicito_elegido: "Porcentaje (%)"},
             color_discrete_sequence=["#B91C1C" if "Adul" in ilicito_elegido else "#D97706" if "Contra" in ilicito_elegido else "#192055"]
         )
-        fig_dept.update_layout(height=650, margin={"l": 150, "r": 20, "t": 20, "b": 40})
+        fig_dept.update_layout(height=700, margin={"l": 150, "r": 20, "t": 20, "b": 40})
         st.plotly_chart(fig_dept, use_container_width=True)
         
     with col_bar2:
@@ -233,8 +232,30 @@ with pag2:
             labels={ilicito_elegido: "Promedio (%)"},
             color="Zona", color_discrete_map=colores_invamer
         )
-        fig_zona_bar.update_layout(height=400, margin={"l": 100, "r": 20, "t": 20, "b": 40}, showlegend=False)
+        fig_zona_bar.update_layout(height=350, margin={"l": 100, "r": 20, "t": 20, "b": 40}, showlegend=False)
         st.plotly_chart(fig_zona_bar, use_container_width=True)
+
+        # --- TERCERA IMAGEN: MAPA DE CALOR ---
+        st.markdown(f"#### Mapa de Calor ({ilicito_elegido.split()[0]})")
+        
+        # Asignamos un color continuo de acuerdo al ilícito para mantener la estética
+        if "Adul" in ilicito_elegido:
+            escala_calor = "Reds"
+        elif "Contra" in ilicito_elegido:
+            escala_calor = "Oranges"
+        else:
+            escala_calor = "Blues"
+            
+        fig_heat = px.choropleth(
+            df, geojson=colombia_geojson, featureidkey="properties.NOMBRE_DPT", locations="DPT_GEOJSON",
+            color=ilicito_elegido, 
+            color_continuous_scale=escala_calor, 
+            hover_name="Departamento",
+            hover_data={"DPT_GEOJSON": False, "Zona": True, ilicito_elegido: ':.2f'}
+        )
+        fig_heat.update_geos(visible=False, fitbounds="locations")
+        fig_heat.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, height=300)
+        st.plotly_chart(fig_heat, use_container_width=True)
 
 # ==============================================================================
 # PÁGINA 3: COMPARATIVA NATIVA Y LIMPIA
@@ -265,7 +286,6 @@ with pag3:
         with col:
             if pd.notna(v_depto) and pd.notna(v_zona):
                 delta = v_depto - v_zona
-                # delta_color="inverse" hace que números positivos (más crimen) se pinten de rojo, y negativos de verde
                 st.metric(label=met.replace(" (%)", ""), value=f"{v_depto:.2f}%", delta=f"{delta:+.2f}% vs Región", delta_color="inverse")
             else:
                 st.metric(label=met.replace(" (%)", ""), value="N/A", delta="Sin datos")
@@ -285,13 +305,3 @@ with pag3:
                 st.metric(label=met.replace(" (%)", ""), value=f"{v_depto:.2f}%", delta=f"{delta_nac:+.2f}% vs Nacional", delta_color="inverse")
             else:
                 st.metric(label=met.replace(" (%)", ""), value="N/A", delta="Sin datos")
-
-# ==============================================================================
-# DATAFRAME INFERIOR
-# ==============================================================================
-st.markdown("---")
-st.markdown("### Base de Datos General")
-st.dataframe(df.drop(columns=["DPT_GEOJSON", "Visual_Zona", "Numero", "lat", "lon"], errors='ignore').style.format({
-    "Adulteración": "{:.2%}", "Contrabando": "{:.2%}", "Falsificación": "{:.2%}",
-    "Adulteración (%)": "{:.2f}%", "Contrabando (%)": "{:.2f}%", "Falsificación (%)": "{:.2f}%"
-}, na_rep="N/A"), use_container_width=True)
