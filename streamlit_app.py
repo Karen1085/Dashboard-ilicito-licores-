@@ -8,8 +8,7 @@ import requests
 st.set_page_config(
     page_title="Dashboard Comercio Ilícito de Licores FND-Datexco", 
     layout="wide", 
-    page_icon="📊",
-    initial_sidebar_state="expanded"
+    page_icon="📊"
 )
 
 # --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT ---
@@ -116,15 +115,8 @@ colores_invamer = {
     "Otras Zonas": "#E5E7EB"
 }
 
-# --- TÍTULO PRINCIPAL Y BARRA LATERAL ---
+# --- TÍTULO PRINCIPAL ---
 st.title("Comercio Ilícito de Licores FND-Datexco 2025")
-
-st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
-st.sidebar.markdown("### Filtro de Zona (Mapa)")
-zona_seleccionada = st.sidebar.selectbox(
-    "Visualizar en pestaña 1:",
-    ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
-)
 
 # --- CREACIÓN DE PESTAÑAS ---
 pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "📊 Comparativa por Departamento"])
@@ -133,6 +125,14 @@ pag1, pag2, pag3 = st.tabs(["🗺️ Mapa y Zonas", "🏆 Tops de Ilícitos", "�
 # PÁGINA 1: MAPA Y ANÁLISIS GEOESPACIAL
 # ==============================================================================
 with pag1:
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # --- NUEVO FILTRO INTEGRADO EN LA PESTAÑA 1 ---
+    zona_seleccionada = st.selectbox(
+        "📍 Seleccione la Zona que desea visualizar en el mapa:",
+        ["Todas las Zonas", "Zona 1", "Zona 2", "Zona 3", "Zona 4", "Zona 5", "Zona 6"]
+    )
+    
     df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
 
     if zona_seleccionada != "Todas las Zonas":
@@ -189,7 +189,7 @@ with pag1:
                     st.markdown(html_card, unsafe_allow_html=True)
         else:
             st.markdown("<h3 style='color: #192055; margin-bottom: 20px;'>Promedios por Zonas</h3>", unsafe_allow_html=True)
-            st.info("💡 Usa el filtro de la izquierda para ver el detalle de los departamentos de cada zona.")
+            st.info("💡 Usa el filtro superior para ver el detalle de los departamentos de cada zona.")
             html_table = "<style>.styled-table { border-collapse: collapse; margin: 15px 0; font-size: 14px; font-family: sans-serif; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px 8px 0 0; overflow: hidden; }.styled-table thead tr { background-color: #192055; color: #ffffff; text-align: left; }.styled-table th, .styled-table td { padding: 14px 15px; }.styled-table tbody tr { border-bottom: 1px solid #e2e8f0; background-color: #ffffff; }.styled-table tbody tr:nth-of-type(even) { background-color: #f8fafc; }.styled-table tbody tr:hover { background-color: #f1f5f9; }</style>"
             html_table += "<table class='styled-table'><thead><tr><th>Zonas FND</th><th style='text-align: right;'>Adulteración</th><th style='text-align: right;'>Contrabando</th><th style='text-align: right;'>Falsificación</th></tr></thead><tbody>"
             for index, row in df_promedios.iterrows():
@@ -238,7 +238,6 @@ with pag2:
         # --- TERCERA IMAGEN: MAPA DE CALOR ---
         st.markdown(f"#### Mapa de Calor ({ilicito_elegido.split()[0]})")
         
-        # Asignamos un color continuo de acuerdo al ilícito para mantener la estética
         if "Adul" in ilicito_elegido:
             escala_calor = "Reds"
         elif "Contra" in ilicito_elegido:
