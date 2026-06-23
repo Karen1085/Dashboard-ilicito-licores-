@@ -158,6 +158,24 @@ colores_metricas = {
 
 widget_title_style = "font-size: 12px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;"
 
+# --- AJUSTE METODOLÓGICO: CÁLCULO DE PROMEDIOS ZONALES Y NACIONALES ---
+# Calculamos el promedio simple para Adulteración y Contrabando
+df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
+
+# Sobreescribimos la columna Falsificación con tabulación directa (datos de la imagen)
+valores_falsificacion_zonas = {
+    "Zona 1": 16.76,
+    "Zona 2": 21.57,
+    "Zona 3": 21.51,
+    "Zona 4": 13.44,
+    "Zona 5": 12.26,
+    "Zona 6": 15.84
+}
+df_promedios["Falsificación (%)"] = df_promedios["Zona"].map(valores_falsificacion_zonas)
+
+# Cálculo de promedio Nacional 
+promedios_nacionales = df[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean()
+
 # --- TÍTULO PRINCIPAL ---
 st.markdown("<h1>Comercio Ilícito de Licores FND-Datexco 2025</h1>", unsafe_allow_html=True)
 
@@ -176,8 +194,6 @@ with pag1:
             label_visibility="collapsed"
         )
     
-    df_promedios = df.groupby("Zona")[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean().reset_index()
-
     if zona_seleccionada != "Todas las Zonas":
         df["Visual_Zona"] = df["Zona"].apply(lambda x: x if x == zona_seleccionada else "Otras Zonas")
         df_zona = df[df["Zona"] == zona_seleccionada].sort_values(by="Departamento").copy()
@@ -329,7 +345,6 @@ with pag3:
     
     fila_depto = df[df["Departamento"] == depto_seleccionado].iloc[0]
     zona_del_depto = fila_depto["Zona"]
-    promedios_nacionales = df[["Adulteración (%)", "Contrabando (%)", "Falsificación (%)"]].mean()
     promedios_zona = df_promedios[df_promedios["Zona"] == zona_del_depto].iloc[0]
     
     st.markdown(f"<div style='{widget_title_style} margin-top: 15px; font-size: 15px;'>Ficha Técnica: {depto_seleccionado} ({zona_del_depto})</div>", unsafe_allow_html=True)
